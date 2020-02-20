@@ -148,3 +148,13 @@ func testMemAndDisk(t *testing.T, f func(*testing.T, DB)) {
 	defer delDiskDB(t, disk)
 	f(t, disk)
 }
+
+func benchmarkMemAndDisk(b *testing.B, f func(*testing.B, DB, string)) {
+	mem := NewMemDB()
+	defer mem.Close()
+	f(b, mem, "Memory")
+
+	disk := newDiskDB(b)
+	defer delDiskDB(b, disk)
+	f(b, disk, "Disk")
+}

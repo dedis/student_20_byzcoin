@@ -520,20 +520,20 @@ func TestCopy(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func newDiskDB(t *testing.T) DB {
+func newDiskDB(tb testing.TB) DB {
 	db, err := bbolt.Open(testDBName, 0600, nil)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 	err = db.Update(func(tx *bbolt.Tx) error {
 		_, err := tx.CreateBucketIfNotExists([]byte(bucketName))
 		return err
 	})
-	require.NoError(t, err)
+	require.NoError(tb, err)
 	return NewDiskDB(db, []byte(bucketName))
 }
 
-func delDiskDB(t *testing.T, db DB) {
-	require.NoError(t, db.Close())
-	require.NoError(t, os.Remove(testDBName))
+func delDiskDB(tb testing.TB, db DB) {
+	require.NoError(tb, db.Close())
+	require.NoError(tb, os.Remove(testDBName))
 }
 
 func getRootNode(t *testing.T, db DB) interiorNode {
@@ -562,4 +562,54 @@ func genNonce() []byte {
 		return nil
 	}
 	return buf
+}
+
+func BenchmarkOverwriteOne(b *testing.B) {
+	benchmarkMemAndDisk(b, benchmarkOverwriteOne)
+}
+
+func benchmarkOverwriteOne(b *testing.B, db DB, name string) {
+	// Initialise a trie.
+	testTrie, err := NewTrie(db, genNonce())
+	require.NoError(b, err)
+	require.NotNil(b, testTrie.nonce)
+	testTrie.noHashKey = true
+
+	// Overwrite one value many times
+	b.Run(name, func(b *testing.B) {
+		// Get a random value
+		v := make([]byte, 1024)
+		rand.Read(v)
+
+		b.ResetTimer()
+
+		testTrie.Set([]byte{0xff}, v)
+	})
+}
+
+func BenchmarkOverwriteMany(b *testing.B) {
+	benchmarkMemAndDisk(b, benchmarkOverwriteMany)
+}
+
+func benchmarkOverwriteMany(b *testing.B, db DB, name string) {
+	// Initialise a trie.
+	testTrie, err := NewTrie(db, genNonce())
+	require.NoError(b, err)
+	require.NotNil(b, testTrie.nonce)
+	testTrie.noHashKey = true
+
+	// Overwrite many values once
+	b.Run(name, func(b *testing.B) {
+		for i := 12; i < 50; i++ {
+			k := []byte{byte(i)}
+			b.ResetTimer()
+			testTrie.Set(k, k)
+		}
+		for i := 12; i < 50; i++ {
+			k := []byte{byte(i)}
+			v := []byte{byte(i + 1)}
+			b.ResetTimer()
+			testTrie.Set(k, v)
+		}
+	})
 }
