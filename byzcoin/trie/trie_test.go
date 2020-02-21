@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"os"
+	"strconv"
 	"testing"
 	"testing/quick"
 
@@ -577,13 +578,18 @@ func benchmarkOverwriteOne(b *testing.B, db DB, name string) {
 
 	// Overwrite one value many times
 	b.Run(name, func(b *testing.B) {
-		// Get a random value
-		v := make([]byte, 1024)
-		rand.Read(v)
 
-		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			b.StopTimer()
 
-		testTrie.Set([]byte{0xff}, v)
+			// Get a random value
+			v := make([]byte, 1024)
+			rand.Read(v)
+
+			b.StartTimer()
+
+			testTrie.Set([]byte{0xff}, v)
+		}
 	})
 }
 
@@ -600,16 +606,52 @@ func benchmarkOverwriteMany(b *testing.B, db DB, name string) {
 
 	// Overwrite many values once
 	b.Run(name, func(b *testing.B) {
-		for i := 12; i < 50; i++ {
-			k := []byte{byte(i)}
-			b.ResetTimer()
-			testTrie.Set(k, k)
-		}
-		for i := 12; i < 50; i++ {
-			k := []byte{byte(i)}
-			v := []byte{byte(i + 1)}
-			b.ResetTimer()
-			testTrie.Set(k, v)
+		for i := 0; i < b.N; i++ {
+			for i := 12; i < 50; i++ {
+				k := []byte{byte(i)}
+				testTrie.Set(k, k)
+			}
+			for i := 12; i < 50; i++ {
+				k := []byte{byte(i)}
+				v := []byte{byte(i + 1)}
+				testTrie.Set(k, v)
+			}
 		}
 	})
+}
+
+func BenchmarkCopy(b *testing.B) {
+	numberOfElements := [4]int{1, 50, 500, 2000}
+	for _, n := range numberOfElements {
+		b.Run(strconv.Itoa(n), func(b *testing.B) { benchmarkCopy(b, n) })
+	}
+}
+
+func benchmarkCopy(b *testing.B, n int) {
+	mem := NewMemDB()
+	defer mem.Close()
+
+	disk := newDiskDB(b)
+	defer delDiskDB(b, disk)
+
+	testTrie, _ := NewTrie(disk, genNonce())
+	testTrie.noHashKey = true
+
+	// Create some keys
+	for i := 0; i < n; i++ {
+		k := []byte{byte(i)}
+		testTrie.Set(k, k)
+	}
+
+	trie2, _ := NewTrie(mem, genNonce())
+	trie2.noHashKey = true
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		// Make a copy
+		trie2.DB().Update(func(b Bucket) error {
+			return testTrie.CopyTo(b)
+		})
+	}
 }
