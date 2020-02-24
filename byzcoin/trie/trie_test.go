@@ -681,6 +681,8 @@ func benchmarkBatch(b *testing.B, db DB, name string, n int) {
 			pairs = append(pairs, kvPair{OpSet, v, v})
 		}
 		b.ResetTimer()
-		trie.Batch(pairs)
+		err := trie.Batch(pairs)
+		b.StopTimer()
+		require.NoError(b, err)
 	})
 }
