@@ -655,3 +655,32 @@ func benchmarkCopy(b *testing.B, n int) {
 		})
 	}
 }
+
+func BenchmarkBatch(b *testing.B) {
+	numberOfElements := [6]int{1000, 10000, 11000, 12000, 13000, 100000}
+	for _, n := range numberOfElements {
+		b.Run(strconv.Itoa(n), func(b *testing.B) {
+			benchmarkMemAndDisk(b, func(b *testing.B, db DB, name string) {
+				benchmarkBatch(b, db, name, n)
+			})
+		})
+	}
+}
+
+func benchmarkBatch(b *testing.B, db DB, name string, n int) {
+	trie, err := NewTrie(db, genNonce())
+	require.NoError(b, err)
+	require.NotNil(b, trie.nonce)
+	trie.noHashKey = true
+	b.Run(name, func(b *testing.B) {
+		// Add a bunch of random keys
+		var pairs []KVPair
+		v := make([]byte, 1024)
+		for i := 0; i < n; i++ {
+			rand.Read(v)
+			pairs = append(pairs, kvPair{OpSet, v, v})
+		}
+		b.ResetTimer()
+		trie.Batch(pairs)
+	})
+}
