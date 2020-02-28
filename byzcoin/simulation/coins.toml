@@ -4,7 +4,7 @@ Bf = 4
 Rounds = 1
 RunWait = "6000s"
 Suite = "Ed25519"
-Accounts = 5
+Accounts = 100
 # Keep the different columns in case someboday wants to run another battery
 # of tests
 
