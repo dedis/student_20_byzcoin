@@ -7,6 +7,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
+	"go.dedis.ch/onet/v3/simul/monitor"
 	"math"
 	"net"
 	"net/http"
@@ -379,10 +380,10 @@ func (s *Service) prepareTxResponse(req *AddTxRequest, tx *TxResult) (*AddTxResp
 // error value to find out if an error has occured. The caller must also check
 // AddTxResponse.Error even if the error return value is nil.
 func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
+	addtx := monitor.NewTimeMeasure("add_tx")
 	if len(req.Transaction.Instructions) == 0 {
 		return nil, xerrors.New("no transactions to add")
 	}
-
 	gen := s.db().GetByID(req.SkipchainID)
 	if gen == nil || gen.Index != 0 {
 		return nil, xerrors.New("skipchain ID is does not exist")
@@ -479,7 +480,7 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 	} else {
 		s.txBuffer.add(string(req.SkipchainID), req.Transaction)
 	}
-
+	addtx.Record()
 	return &AddTxResponse{Version: CurrentVersion}, nil
 }
 
