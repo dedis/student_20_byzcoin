@@ -87,7 +87,7 @@ func (s *SimulationService) ViewBalance(account1 byzcoin.InstanceID, c *byzcoin.
 	if err != nil {
 		xerrors.Errorf("couldn't decode account: %v", err)
 	}
-	return  account.Value
+	return account.Value
 }
 
 
@@ -205,41 +205,11 @@ func (s *SimulationService) Run(config *onet.SimulationConfig) error {
 	if err != nil {
 		xerrors.Errorf("Error crediting", err)
 	}
-	/*
-	tx, err := c.CreateTransaction(byzcoin.Instruction{
-		InstanceID: account1,
-		Invoke: &byzcoin.Invoke{
-			ContractID: contracts.ContractCoinID,
-			Command:    "mint",
-			Args: byzcoin.Arguments{{
-				Name:  "coins",
-				Value: coins}},
-		},
-		SignerIdentities: []darc.Identity{signer.Identity()},
-		SignerCounter:    []uint64{NONCE},
-	})
-	if err != nil {
-		return err
-	}
-	if err = tx.FillSignersAndSignWith(signer); err != nil {
-		return xerrors.Errorf("signing of instruction failed: %v", err)
-	}
-	_, err = c.AddTransactionAndWait(tx, 2)
-	if err != nil {
-		return xerrors.Errorf("couldn't mint coin: %v", err)
-	}
-	NONCE++
 
-	credited := binary.LittleEndian.Uint64(coins)
-
-
-	*/
 	balance[account1.String()] = binary.LittleEndian.Uint64(coins)
-
 
 	//Check the balance of account1
 	s.ViewBalance(account1, c)
-
 
 	coinOne := make([]byte, 8)
 	coinOne[0] = byte(1)
@@ -337,41 +307,10 @@ func (s *SimulationService) Run(config *onet.SimulationConfig) error {
 		// it doesn't wait until the transaction is included in all nodes. Thus this wait for
 		// the new block to be propagated.
 		time.Sleep(time.Second)
-
-
-
-		/*
-
-			proof, err := c.GetProof(account2.Slice())
-			if err != nil {
-				return xerrors.Errorf("couldn't get proof for transaction: %v", err)
-			}
-			_, v0, _, _, err := proof.Proof.KeyValue()
-			if err != nil {
-				return xerrors.Errorf("proof doesn't hold transaction: %v", err)
-			}
-			var account byzcoin.Coin
-			err = protobuf.Decode(v0, &account)
-			if err != nil {
-				return xerrors.Errorf("couldn't decode account: %v", err)
-			}
-			if account.Value != uint64(s.Transactions*(round+1)) {
-			}
-		*/
 		confirm.Record()
 		roundM.Record()
 
-		log.LLvl1("Check all balances")
-		for k, v := range txAccounts.Instructions{
-			account := txAccounts.Instructions[k].DeriveID("").String()
-			ledger := s.ViewBalance(v.DeriveID(""), c)
-			txs := balance[account]
-			if int(txs)*(round+1) != int(ledger) {
-				log.LLvl1(ledger, int(txs)*(round+1), "account has wrong amount")
-				return xerrors.New("account has wrong amount")
-			}
-			log.Lvlf1("Account %s has %d - total should be: %d", account, ledger, int(txs)*(round+1))
-		}
+
 
 
 
@@ -381,6 +320,18 @@ func (s *SimulationService) Run(config *onet.SimulationConfig) error {
 		// (runsimul.go in onet) might close some nodes and cause
 		// skipblock propagation to fail.
 		time.Sleep(blockInterval)
+	}
+
+	log.LLvl1("Check all balances")
+	for k, v := range txAccounts.Instructions{
+		account := txAccounts.Instructions[k].DeriveID("").String()
+		ledgerBalance := s.ViewBalance(v.DeriveID(""), c)
+		txs := balance[account]
+		if int(txs) != int(ledgerBalance) {
+			log.LLvl1(ledgerBalance, int(txs), "account has wrong amount")
+			return xerrors.New("account has wrong amount")
+		}
+		log.Lvlf1("Account %s has %d - total should be: %d", account, ledgerBalance, int(txs))
 	}
 
 
