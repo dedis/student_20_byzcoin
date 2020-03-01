@@ -20,7 +20,7 @@ func init() {
 	onet.SimulationRegister("TransferCoins", NewSimulationService)
 }
 
-var NONCE uint64
+var txNonce uint64
 
 // SimulationService holds the state of the simulation.
 type SimulationService struct {
@@ -79,9 +79,9 @@ func (s *SimulationService) SpawnAccounts(c *byzcoin.Client, gm *byzcoin.CreateG
 				ContractID: contracts.ContractCoinID,
 			},
 			SignerIdentities: []darc.Identity{signer.Identity()},
-			SignerCounter:    []uint64{NONCE},
+			SignerCounter:    []uint64{txNonce},
 		}
-		NONCE++
+		txNonce++
 		instr = append(instr, inst)
 	}
 
@@ -137,7 +137,7 @@ func (s *SimulationService) Credit(account byzcoin.InstanceID, c *byzcoin.Client
 				Value: quant}},
 		},
 		SignerIdentities: []darc.Identity{signer.Identity()},
-		SignerCounter:    []uint64{NONCE},
+		SignerCounter:    []uint64{txNonce},
 	}
 	tx, err := c.CreateTransaction(inst)
 	if err != nil {
@@ -150,7 +150,7 @@ func (s *SimulationService) Credit(account byzcoin.InstanceID, c *byzcoin.Client
 	if err != nil {
 		return xerrors.Errorf("couldn't mint coin: %v", err)
 	}
-	NONCE++
+	txNonce++
 	return nil
 }
 
@@ -186,7 +186,7 @@ func (s *SimulationService) Run(config *onet.SimulationConfig) error {
 	balance := make(map[string]uint64)
 
 	// Create number of specified accounts and mint 'Transaction' coins on first account.
-	NONCE = uint64(1)
+	txNonce = uint64(1)
 
 	txAccounts, err := s.SpawnAccounts(c, gm, signer)
 	if err != nil {
@@ -195,7 +195,7 @@ func (s *SimulationService) Run(config *onet.SimulationConfig) error {
 
 	account1 := txAccounts.Instructions[0].DeriveID("")
 
-	for k, _ := range txAccounts.Instructions {
+	for k := range txAccounts.Instructions {
 		log.LLvl1("Created account", txAccounts.Instructions[k].DeriveID("").String())
 	}
 
@@ -270,10 +270,10 @@ func (s *SimulationService) Run(config *onet.SimulationConfig) error {
 							}},
 					},
 					SignerIdentities: []darc.Identity{signer.Identity()},
-					SignerCounter:    []uint64{NONCE},
+					SignerCounter:    []uint64{txNonce},
 				})
 
-				NONCE++
+				txNonce++
 				balance[rAccount.String()] = balance[rAccount.String()] + binary.LittleEndian.Uint64(coinOne)
 				balance[account1.String()] = balance[account1.String()] - 1
 
