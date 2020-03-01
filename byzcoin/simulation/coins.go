@@ -20,8 +20,6 @@ func init() {
 	onet.SimulationRegister("TransferCoins", NewSimulationService)
 }
 
-
-
 var NONCE uint64
 
 // SimulationService holds the state of the simulation.
@@ -32,7 +30,7 @@ type SimulationService struct {
 	BatchSize     int
 	Keep          bool
 	Delay         int
-	Accounts 	  int
+	Accounts      int
 }
 
 // NewSimulationService returns the new simulation, where all fields are
@@ -71,11 +69,10 @@ func (s *SimulationService) Node(config *onet.SimulationConfig) error {
 	return s.SimulationBFTree.Node(config)
 }
 
-
 //SpawnAccounts creates the specified number of accounts and returns the associated transaction
 func (s *SimulationService) SpawnAccounts(c *byzcoin.Client, gm *byzcoin.CreateGenesisBlock, signer darc.Signer) (byzcoin.ClientTransaction, error) {
 	instr := make([]byzcoin.Instruction, 0)
-	for i := 0; i<s.Accounts; i++ {
+	for i := 0; i < s.Accounts; i++ {
 		inst := byzcoin.Instruction{
 			InstanceID: byzcoin.NewInstanceID(gm.GenesisDarc.GetBaseID()),
 			Spawn: &byzcoin.Spawn{
@@ -88,7 +85,7 @@ func (s *SimulationService) SpawnAccounts(c *byzcoin.Client, gm *byzcoin.CreateG
 		instr = append(instr, inst)
 	}
 
-	txAccounts,err := c.CreateTransaction(instr...)
+	txAccounts, err := c.CreateTransaction(instr...)
 	if err != nil {
 		return byzcoin.ClientTransaction{}, err
 	}
@@ -101,7 +98,7 @@ func (s *SimulationService) SpawnAccounts(c *byzcoin.Client, gm *byzcoin.CreateG
 	// Send the instructions.
 	_, err = c.AddTransactionAndWait(txAccounts, 2)
 	if err != nil {
-		return  byzcoin.ClientTransaction{}, xerrors.Errorf("couldn't initialize accounts: %v", err)
+		return byzcoin.ClientTransaction{}, xerrors.Errorf("couldn't initialize accounts: %v", err)
 	}
 
 	return txAccounts, nil
@@ -112,7 +109,7 @@ func (s *SimulationService) SpawnAccounts(c *byzcoin.Client, gm *byzcoin.CreateG
 func (s *SimulationService) ViewBalance(account1 byzcoin.InstanceID, c *byzcoin.Client) (uint64, error) {
 	proof, err := c.GetProof(account1.Slice())
 	if err != nil {
-		 return 0, xerrors.Errorf("couldn't get proof for transaction: %v", err)
+		return 0, xerrors.Errorf("couldn't get proof for transaction: %v", err)
 	}
 	_, v0, _, _, err := proof.Proof.KeyValue()
 	if err != nil {
@@ -127,7 +124,7 @@ func (s *SimulationService) ViewBalance(account1 byzcoin.InstanceID, c *byzcoin.
 }
 
 //Credit credits the specified number of coins to the specified account
-func (s *SimulationService) Credit (account byzcoin.InstanceID, c *byzcoin.Client, value uint64, signer darc.Signer) error {
+func (s *SimulationService) Credit(account byzcoin.InstanceID, c *byzcoin.Client, value uint64, signer darc.Signer) error {
 	quant := make([]byte, 8)
 	binary.LittleEndian.PutUint64(quant, value)
 	inst := byzcoin.Instruction{
@@ -156,8 +153,6 @@ func (s *SimulationService) Credit (account byzcoin.InstanceID, c *byzcoin.Clien
 	NONCE++
 	return nil
 }
-
-
 
 // Run is used on the destination machines and runs a number of
 // rounds
@@ -200,7 +195,7 @@ func (s *SimulationService) Run(config *onet.SimulationConfig) error {
 
 	account1 := txAccounts.Instructions[0].DeriveID("")
 
-	for k, _  := range txAccounts.Instructions {
+	for k, _ := range txAccounts.Instructions {
 		log.LLvl1("Created account", txAccounts.Instructions[k].DeriveID("").String())
 	}
 
@@ -224,7 +219,7 @@ func (s *SimulationService) Run(config *onet.SimulationConfig) error {
 
 	rand.Seed(time.Now().UnixNano())
 	min := 1
-	max := s.Accounts-1
+	max := s.Accounts - 1
 
 	for round := 0; round < s.Rounds; round++ {
 		log.Lvl1("Starting round", round)
@@ -257,7 +252,7 @@ func (s *SimulationService) Run(config *onet.SimulationConfig) error {
 
 			prepare := monitor.NewTimeMeasure("prepare")
 			for i := 0; i < insts; i++ {
-				randomAccountNumber := rand.Intn(max - min + 1) + min
+				randomAccountNumber := rand.Intn(max-min+1) + min
 				rAccount := txAccounts.Instructions[randomAccountNumber].DeriveID("")
 				instrs := append(tx.Instructions, byzcoin.Instruction{
 					InstanceID: account1,
@@ -311,7 +306,6 @@ func (s *SimulationService) Run(config *onet.SimulationConfig) error {
 		confirm.Record()
 		roundM.Record()
 
-
 		// This sleep is needed to wait for the propagation to finish
 		// on all the nodes. Otherwise the simulation manager
 		// (runsimul.go in onet) might close some nodes and cause
@@ -320,7 +314,7 @@ func (s *SimulationService) Run(config *onet.SimulationConfig) error {
 	}
 
 	log.LLvl1("Check all balances")
-	for k, v := range txAccounts.Instructions{
+	for k, v := range txAccounts.Instructions {
 		account := txAccounts.Instructions[k].DeriveID("").String()
 		ledgerBalance, err := s.ViewBalance(v.DeriveID(""), c)
 		if err != nil {
@@ -335,7 +329,6 @@ func (s *SimulationService) Run(config *onet.SimulationConfig) error {
 		log.Lvlf1("Account %s has %d - total should be: %d", account, ledgerBalance, int(txs))
 	}
 
-
 	// We wait a bit before closing because c.GetProof is sent to the
 	// leader, but at this point some of the children might still be doing
 	// updateCollection. If we stop the simulation immediately, then the
@@ -344,4 +337,3 @@ func (s *SimulationService) Run(config *onet.SimulationConfig) error {
 	time.Sleep(time.Second)
 	return nil
 }
-
