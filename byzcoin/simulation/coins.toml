@@ -1,7 +1,7 @@
 Simulation = "TransferCoins"
 Servers = 2
 Bf = 4
-Rounds = 10
+Rounds = 3
 RunWait = "6000s"
 Suite = "Ed25519"
 Accounts = 5
