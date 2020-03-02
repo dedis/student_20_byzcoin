@@ -20,10 +20,6 @@ _: &stage_build_go
   script:
     - make -C conode bindist tooldist
     - GO111MODULE=on go build ./...
-_: &stage_deploy_npm
-  <<: *language_js
-  before_deploy: echo "//registry.npmjs.org/:_authToken=${DEPLOY_NPM_TOKEN}" > $HOME/.npmrc
-  script: skip  # default to `make test`
 
 dist: trusty
 
@@ -31,7 +27,6 @@ stages:
   - lint
   - build
   - test
-  - deploy
 
 jobs:
   include:
@@ -48,39 +43,12 @@ jobs:
       script:
         - make -C conode verify
         - GO111MODULE=on make test_{fmt,lint}
-    - name: "js > kyber"
-      <<: *language_js
-      script:
-        - cd external/js/kyber
-        - npm ci
-        - npm run linter
-    - name: "js > cothority"
-      <<: *language_js
-      script:
-        - cd external/js/cothority
-        - npm ci
-        - npm run linter
 
     - stage: build
       <<: *stage_build_go
       <<: *language_go_1_13
     - <<: *stage_build_go
       <<: *language_go_1_14
-
-    - name: "js > kyber"
-      <<: *language_js
-      script:
-        - cd external/js/kyber
-        - npm ci
-        - npm run build
-    - name: "js > cothority"
-      <<: *language_js
-      script:
-        - *gen_link_kyber
-        - cd external/js/cothority
-        - npm ci
-        - npm link @dedis/kyber
-        - npm run build
 
     - stage: test
       <<: *language_go_1_14
