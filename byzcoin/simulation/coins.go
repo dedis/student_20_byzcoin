@@ -157,6 +157,10 @@ func (s *SimulationService) Credit(account byzcoin.InstanceID, c *byzcoin.Client
 // Run is used on the destination machines and runs a number of
 // rounds
 func (s *SimulationService) Run(config *onet.SimulationConfig) error {
+
+	simul_monitor := monitor.NewTimeMeasure("full_simulation")
+	defer simul_monitor.Record()
+
 	size := config.Tree.Size()
 	log.Lvl2("Size is:", size, "rounds:", s.Rounds, "transactions:", s.Transactions)
 	signer := darc.NewSignerEd25519(nil, nil)
@@ -224,7 +228,7 @@ func (s *SimulationService) Run(config *onet.SimulationConfig) error {
 	for round := 0; round < s.Rounds; round++ {
 		log.Lvl1("Starting round", round)
 
-		roundM := monitor.NewTimeMeasure("round")
+		fullRound := monitor.NewTimeMeasure("full_round")
 
 		if s.Transactions < 3 {
 			log.Warn("The 'send_sum' measurement will be very skewed, as the last transaction")
@@ -298,13 +302,14 @@ func (s *SimulationService) Run(config *onet.SimulationConfig) error {
 		if err != nil {
 			return xerrors.Errorf("while adding transaction and waiting: %v", err)
 		}
+		confirm.Record()
 
 		// The AddTransactionAndWait returns as soon as the transaction is included in the node, but
 		// it doesn't wait until the transaction is included in all nodes. Thus this wait for
 		// the new block to be propagated.
 		time.Sleep(time.Second)
-		confirm.Record()
-		roundM.Record()
+
+		fullRound.Record()
 
 		// This sleep is needed to wait for the propagation to finish
 		// on all the nodes. Otherwise the simulation manager

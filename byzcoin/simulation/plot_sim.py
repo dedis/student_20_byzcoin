@@ -1,6 +1,8 @@
+#! /bin/python
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
+import datetime
 
 data_dir = './test_data/'
 files = [(data_dir + fname) for fname in os.listdir(data_dir)\
@@ -33,52 +35,73 @@ delays = list(set(df['delay']))
 keep = list(set(df['keep']))
 batch = list(set(df['batch']))
 
+def plot_columns(ax, columns):
+    last = None
+    for column in columns:
+        ax.bar(ind, data[column], label=column[:-9], bottom=last)
+        last = data[column]
+
+    ax.set_xlabel('transactions / batch size')
+    ax.legend(bbox_to_anchor=(0.1, 0.5), loc='center left',)
+
 for delay in delays:
     for k in keep:
         for b in batch:
-            titlestring = 'Ground Truth localhost 5 hosts'
+            titlestring =  'Byzcoin Simulation Monitor'
             # No whitespace, colons or commata in filenames
-            namestring = titlestring.replace(' ','').replace(':','-').replace(',','_')
+            namestring = (str(datetime.datetime.now()) + '-' + titlestring).replace(' ','').replace(':','-')
+
             data = df.loc[df['delay'] == delay].sort_values('hosts')
             data = data.loc[data['keep'] == k]
             data = data.loc[data['batch'] == b]
             data = data.reset_index()
 
+            ind = ("2/5")
 
+            fig, axs = plt.subplots(1, 2)
 
-            ax = data.plot.bar(
-                    y=['prepare_wall_sum','send_wall_sum','confirm_wall_avg'],\
-                    stacked=True,
-                    )
+            fig.suptitle(titlestring)
 
+            plot_columns(axs[0], ['prepare_user_sum',
+                                  'send_user_sum',
+                                  'confirm_user_sum'])
 
-            labels = ["20/1", "20/5", "20/10", "200/1", "200/5", "200/10", "2000/1", "2000/5", "2000/10", "2000/100"]
+            axs[0].set_ylabel('Time in seconds')
+            
+            #data.plot(y='full_simulation_user_sum', marker='o')
 
-            ax.set_xticklabels(labels)
+            #data.plot.bar(
+            #        y=[
+            #            'prepare_user_sum',
+            #            'send_user_sum',
+            #            'confirm_user_sum',
+            #            #'collect_tx_user_sum',
+            #            #'process_tx_user_sum',
+            #            #'create_new_block_user_sum',
+            #            #'create_state_change_user_sum',
+            #            #'update_trie_callback_user_sum',
+            #            #'process_one_tx_user_sum'
+            #        ], stacked=True)
 
+            plot_columns(axs[1], ['create_new_block_user_sum',
+                                  'create_state_change_user_sum',
+                                  'update_trie_callback_user_sum',
+                                  'process_one_tx_user_sum'])
 
+            #data.plot(y='full_simulation_user_sum', marker='o')
 
-            data.plot(y='round_wall_avg', marker='o', ax=ax)
+            #data.plot.bar(
+            #        y=[
+            #            #'prepare_user_sum',
+            #            #'send_user_sum',
+            #            #'confirm_user_sum',
+            #            #'collect_tx_user_sum',
+            #            #'process_tx_user_sum',
+            #            'create_new_block_user_sum',
+            #            'create_state_change_user_sum',
+            #            'update_trie_callback_user_sum',
+            #            'process_one_tx_user_sum'
+            #        ], stacked=True)
 
-
-            plt.xlabel('transactions / instructions')
-            plt.ylabel('Time in seconds')
-            plt.title(titlestring)
-            plt.savefig(data_dir + 'barplot_' + namestring + '.png')
-            plt.close()
-
-
-            ax = data.plot.bar(
-                    y=['prepare_wall_sum','send_wall_sum','confirm_wall_avg'],\
-                    stacked=True)
-            data.plot(y='round_wall_avg', marker='o', ax=ax)
-            ax.set_yscale('log')
-            ax.set_xticklabels(labels)
-
-            plt.xlabel('transactions / instructions')
-            plt.ylabel('logarithm of time in seconds')
-            plt.title(titlestring)
-
-
-            plt.savefig(data_dir + 'barplot_log_delay_' + namestring + '.png', bbox_inches='tight')
+            plt.savefig(data_dir + namestring + '.png')
             plt.close()

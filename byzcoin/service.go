@@ -958,6 +958,9 @@ func (s *Service) createNewBlock(scID skipchain.SkipBlockID, r *onet.Roster, tx 
 	var sst *stagingStateTrie
 	var version Version
 
+	create_nb := monitor.NewTimeMeasure("create_new_block")
+	defer create_nb.Record()
+
 	if scID.IsNull() {
 		// For a genesis block, we create a throwaway staging trie.
 		// There is no need to verify the darc because the caller does
@@ -1498,6 +1501,9 @@ func (s *Service) updateTrieCallback(sbID skipchain.SkipBlockID) error {
 	if s.closed {
 		return nil
 	}
+
+	update_trie_callback := monitor.NewTimeMeasure("update_trie_callback")
+	defer update_trie_callback.Record()
 
 	defer log.Lvlf4("%s updated trie for %x", s.ServerIdentity(), sbID)
 
@@ -2084,6 +2090,9 @@ func (s *Service) createStateChanges(sst *stagingStateTrie, scID skipchain.SkipB
 	// version of the byzcoin protocol.
 	txIn.SetVersion(version)
 
+	create_state_change := monitor.NewTimeMeasure("create_state_change")
+	defer create_state_change.Record()
+
 	// If what we want is in the cache, then take it from there. Otherwise
 	// ignore the error and compute the state changes.
 	var err error
@@ -2174,6 +2183,11 @@ func (s *Service) addError(tx ClientTransaction, err error) {
 // from the trie should be read from sst and not the service.
 func (s *Service) processOneTx(sst *stagingStateTrie, tx ClientTransaction,
 	scID skipchain.SkipBlockID) (StateChanges, *stagingStateTrie, error) {
+	
+	log.LLvl1("Processing one tx")
+
+	process_one_tx := monitor.NewTimeMeasure("process_one_tx")
+	defer process_one_tx.Record()
 
 	// Make a new trie for each instruction. If the instruction is
 	// sucessfully implemented and changes applied, then keep it
