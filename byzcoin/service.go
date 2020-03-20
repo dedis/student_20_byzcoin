@@ -1940,7 +1940,6 @@ func (s *Service) startPolling(scID skipchain.SkipBlockID) chan bool {
 		s.working.Add(1)
 		defer s.working.Done()
 		s.closedMutex.Unlock()
-
 		pipeline.start(&initialState, stopChan)
 	}()
 
@@ -2792,6 +2791,7 @@ func (s *Service) startChain(genesisID skipchain.SkipBlockID) error {
 		return xerrors.Errorf("getLeader should not return an error if roster is initialised: %v",
 			err)
 	}
+	//TODO : start rollup_tx protocol leader part here?
 	if leader.Equal(s.ServerIdentity()) {
 		log.Lvlf2("%s: Starting as a leader for chain %x", s.ServerIdentity(), latest.SkipChainID())
 		s.pollChanMut.Lock()
