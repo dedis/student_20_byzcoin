@@ -27,8 +27,12 @@ type CollectTxProtocol struct {
 	SkipchainID       skipchain.SkipBlockID
 	LatestID          skipchain.SkipBlockID
 	MaxNumTxs         int
+
+
 	requestChan       chan structCollectTxRequest
 	responseChan      chan structCollectTxResponse
+
+
 	getTxs            getTxsCallback
 	Finish            chan bool
 	closing           chan bool
@@ -95,6 +99,8 @@ func (p *CollectTxProtocol) Start() error {
 	if len(p.LatestID) == 0 {
 		return xerrors.New("missing latest skipblock ID")
 	}
+	log.LLvl1(p.ServerIdentity(), "STARTING CollectTxProtocol")
+
 	req := &CollectTxRequest{
 		SkipchainID: p.SkipchainID,
 		LatestID:    p.LatestID,
@@ -143,7 +149,7 @@ func (p *CollectTxProtocol) Dispatch() error {
 		Txs:            p.getTxs(req.ServerIdentity, p.Roster(), req.SkipchainID, req.LatestID, maxOut),
 		ByzcoinVersion: p.getByzcoinVersion(),
 	}
-	log.Lvl3(p.ServerIdentity(), "sends back", len(resp.Txs), "transactions")
+	log.LLvl1(p.ServerIdentity(), "sends back", len(resp.Txs), "transactions")
 	if p.IsRoot() {
 		if err := p.SendTo(p.TreeNode(), resp); err != nil {
 			return xerrors.Errorf("sending msg: %v", err)

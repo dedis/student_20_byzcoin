@@ -100,6 +100,55 @@ type defaultTxProcessor struct {
 	sync.Mutex
 }
 
+
+func (s *defaultTxProcessor) RollupTx() (*collectTxResult, error) {
+	bcConfig, err := s.LoadConfig(s.scID)
+	if err != nil {
+		log.Error(s.ServerIdentity(), "couldn't get configuration - this is bad and probably "+
+			"a problem with the database! ", err)
+		return nil, xerrors.Errorf("reading config: %v", err)
+	}
+
+	//_, isNotProcessingBlock := s.skService().WaitBlock(s.scID, nil)
+
+	latest, err := s.db().GetLatestByID(s.scID)
+	if err != nil {
+		log.Errorf("Error while searching for %x", s.scID[:])
+		log.Error("DB is in bad state and cannot find skipchain anymore."+
+			" This function should never be called on a skipchain that does not exist.", err)
+		return nil, xerrors.Errorf("reading latest: %v", err)
+	}
+
+	// Keep track of the latest block for the processing
+	s.Lock()
+	s.latest = latest
+	s.Unlock()
+
+	log.Lvlf3("%s: Starting new block %d (%x) for chain %x", s.ServerIdentity(), latest.Index+1, latest.Hash, s.scID)
+	tree := bcConfig.Roster.GenerateNaryTree(len(bcConfig.Roster.List))
+
+
+	//Starts tx rollup protocol
+	pi, err := s.CreateProtocol("Rollup", tree)
+	if err != nil {
+		log.Error(s.ServerIdentity(), "Protocol creation failed with error."+
+			" This panic indicates that there is most likely a programmer error,"+
+			" e.g., the protocol does not exist."+
+			" Hence, we cannot recover from this failure without putting"+
+			" the server in a strange state, so we panic.", err)
+		return nil, xerrors.Errorf("creating protocol: %v", err)
+	}
+	rt := pi.(*RollupTxProtocol)
+	rt.SkipchainID = s.scID
+	rt.LatestID = latest.Hash
+	pi.Start()
+
+
+	return &collectTxResult{Txs: nil, CommonVersion: 1}, nil
+
+
+}
+
 func (s *defaultTxProcessor) CollectTx() (*collectTxResult, error) {
 	// Need to update the config, as in the meantime a new block should have
 	// arrived with a possible new configuration.
@@ -128,6 +177,9 @@ func (s *defaultTxProcessor) CollectTx() (*collectTxResult, error) {
 	log.Lvlf3("%s: Starting new block %d (%x) for chain %x", s.ServerIdentity(), latest.Index+1, latest.Hash, s.scID)
 	tree := bcConfig.Roster.GenerateNaryTree(len(bcConfig.Roster.List))
 
+	//Keep it like that for now
+	_, _ = s.RollupTx()
+
 	proto, err := s.CreateProtocol(collectTxProtocol, tree)
 	if err != nil {
 		log.Error(s.ServerIdentity(), "Protocol creation failed with error."+
@@ -146,7 +198,7 @@ func (s *defaultTxProcessor) CollectTx() (*collectTxResult, error) {
 		root.MaxNumTxs = 0
 	}
 
-	log.Lvl3("Asking", root.Roster().List, "for Txs")
+	log.LLvl1("Asking", root.Roster().List, "for Txs")
 	if err := root.Start(); err != nil {
 		log.Error(s.ServerIdentity(), "Failed to start the protocol with error."+
 			" Start() only returns an error when the protocol is not initialised correctly,"+
@@ -194,8 +246,9 @@ collectTxLoop:
 		}
 	}
 
-	return &collectTxResult{Txs: txs, CommonVersion: commonVersion}, nil
-}
+
+
+	return &collectTxResult{Txs: txs, CommonVersion: commonVersion}, nil}
 
 func (s *defaultTxProcessor) ProcessTx(tx ClientTransaction, inState *txProcessorState) ([]*txProcessorState, error) {
 	s.Lock()
@@ -344,6 +397,7 @@ func (p *txPipeline) collectTx() {
 			select {
 			case <-p.stopCollect:
 				log.Lvl3("stopping tx collector")
+				log.LLvl1("stopping tx collector")
 				close(p.ctxChan)
 				return
 			case <-time.After(interval / 2):
@@ -358,6 +412,7 @@ func (p *txPipeline) collectTx() {
 
 				for _, tx := range res.Txs {
 					select {
+
 					case p.ctxChan <- tx:
 						// channel not full, do nothing
 					default:
@@ -405,6 +460,7 @@ func (p *txPipeline) processTxs(initialState *txProcessorState) {
 					err := <-proposalResult
 					proposalResult <- err
 				}
+
 
 				err := p.processor.ProposeUpgradeBlock(version)
 				if err != nil {
@@ -463,6 +519,7 @@ func (p *txPipeline) processTxs(initialState *txProcessorState) {
 				}(inState)
 			case tx, ok := <-p.ctxChan:
 				select {
+
 				// This case has a higher priority so we force the select to go through it
 				// first.
 				case <-intervalChan:
@@ -470,6 +527,8 @@ func (p *txPipeline) processTxs(initialState *txProcessorState) {
 					break
 				default:
 				}
+
+
 
 				if !ok {
 					log.Lvl3("stopping txs processor")
