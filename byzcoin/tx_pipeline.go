@@ -13,9 +13,9 @@ import (
 	"golang.org/x/xerrors"
 )
 
-// collectTxResult contains the aggregated response of the conodes to the
+// rollupTxResult contains the aggregated response of the conodes to the
 // collectTx protocol.
-type collectTxResult struct {
+type rollupTxResult struct {
 	Txs           []ClientTransaction
 	CommonVersion Version
 }
@@ -23,9 +23,9 @@ type collectTxResult struct {
 // txProcessor is the interface that must be implemented. It is used in the
 // stateful pipeline txPipeline that takes transactions and creates blocks.
 type txProcessor interface {
-	// CollectTx implements a blocking function that returns transactions
+	// RollupTx implements a blocking function that returns transactions
 	// that should go into new blocks. These transactions are not verified.
-	CollectTx() (*collectTxResult, error)
+	RollupTx() (*rollupTxResult, error)
 	// ProcessTx attempts to apply the given tx to the input state and then
 	// produce new state(s). If the new tx is too big to fit inside a new
 	// state, the function will return more states. Where the older states
@@ -101,55 +101,9 @@ type defaultTxProcessor struct {
 }
 
 
-func (s *defaultTxProcessor) RollupTx() (*collectTxResult, error) {
-	bcConfig, err := s.LoadConfig(s.scID)
-	if err != nil {
-		log.Error(s.ServerIdentity(), "couldn't get configuration - this is bad and probably "+
-			"a problem with the database! ", err)
-		return nil, xerrors.Errorf("reading config: %v", err)
-	}
-
-	//_, isNotProcessingBlock := s.skService().WaitBlock(s.scID, nil)
-
-	latest, err := s.db().GetLatestByID(s.scID)
-	if err != nil {
-		log.Errorf("Error while searching for %x", s.scID[:])
-		log.Error("DB is in bad state and cannot find skipchain anymore."+
-			" This function should never be called on a skipchain that does not exist.", err)
-		return nil, xerrors.Errorf("reading latest: %v", err)
-	}
-
-	// Keep track of the latest block for the processing
-	s.Lock()
-	s.latest = latest
-	s.Unlock()
-
-	log.Lvlf3("%s: Starting new block %d (%x) for chain %x", s.ServerIdentity(), latest.Index+1, latest.Hash, s.scID)
-	tree := bcConfig.Roster.GenerateNaryTree(len(bcConfig.Roster.List))
 
 
-	//Starts tx rollup protocol
-	pi, err := s.CreateProtocol("Rollup", tree)
-	if err != nil {
-		log.Error(s.ServerIdentity(), "Protocol creation failed with error."+
-			" This panic indicates that there is most likely a programmer error,"+
-			" e.g., the protocol does not exist."+
-			" Hence, we cannot recover from this failure without putting"+
-			" the server in a strange state, so we panic.", err)
-		return nil, xerrors.Errorf("creating protocol: %v", err)
-	}
-	rt := pi.(*RollupTxProtocol)
-	rt.SkipchainID = s.scID
-	rt.LatestID = latest.Hash
-	pi.Start()
-
-
-	return &collectTxResult{Txs: nil, CommonVersion: 1}, nil
-
-
-}
-
-func (s *defaultTxProcessor) CollectTx() (*collectTxResult, error) {
+func (s *defaultTxProcessor) RollupTx() (*rollupTxResult, error) {
 	// Need to update the config, as in the meantime a new block should have
 	// arrived with a possible new configuration.
 	bcConfig, err := s.LoadConfig(s.scID)
@@ -181,10 +135,9 @@ func (s *defaultTxProcessor) CollectTx() (*collectTxResult, error) {
 	log.Lvlf3("%s: Starting new block %d (%x) for chain %x", s.ServerIdentity(), latest.Index+1, latest.Hash, s.scID)
 	tree := bcConfig.Roster.GenerateNaryTree(len(bcConfig.Roster.List))
 
-	//Keep it like that for now
-	_, _ = s.RollupTx()
 
-	proto, err := s.CreateProtocol(collectTxProtocol, tree)
+
+	proto, err := s.CreateProtocol(rollupTxProtocol, tree)
 	if err != nil {
 		log.Error(s.ServerIdentity(), "Protocol creation failed with error."+
 			" This panic indicates that there is most likely a programmer error,"+
@@ -193,7 +146,7 @@ func (s *defaultTxProcessor) CollectTx() (*collectTxResult, error) {
 			" the server in a strange state, so we panic.", err)
 		return nil, xerrors.Errorf("creating protocol: %v", err)
 	}
-	root := proto.(*CollectTxProtocol)
+	root := proto.(*RollupTxProtocol)
 	root.SkipchainID = s.scID
 	root.LatestID = latest.Hash
 
@@ -214,7 +167,7 @@ func (s *defaultTxProcessor) CollectTx() (*collectTxResult, error) {
 	var txs []ClientTransaction
 	commonVersion := Version(0)
 
-collectTxLoop:
+rollupTxLoop:
 	for {
 		select {
 		case commonVersion = <-root.CommonVersionChan:
@@ -232,22 +185,22 @@ collectTxLoop:
 					}
 				}
 			} else {
-				break collectTxLoop
+				break rollupTxLoop
 			}
 		case <-protocolTimeout:
 			log.Lvl2(s.ServerIdentity(), "timeout while collecting transactions from other nodes")
 			close(root.Finish)
-			break collectTxLoop
+			break rollupTxLoop
 		case <-s.stopCollect:
 			log.Lvl2(s.ServerIdentity(), "abort collection of transactions")
 			close(root.Finish)
-			break collectTxLoop
+			break rollupTxLoop
 		}
 	}
 
 
 
-	return &collectTxResult{Txs: txs, CommonVersion: commonVersion}, nil}
+	return &rollupTxResult{Txs: txs, CommonVersion: commonVersion}, nil}
 
 func (s *defaultTxProcessor) ProcessTx(tx ClientTransaction, inState *txProcessorState) ([]*txProcessorState, error) {
 	s.Lock()
@@ -400,7 +353,7 @@ func (p *txPipeline) collectTx() {
 				close(p.ctxChan)
 				return
 			case <-time.After(interval / 2):
-				res, err := p.processor.CollectTx()
+				res, err := p.processor.RollupTx()
 				if err != nil {
 					log.Error("failed to collect transactions", err)
 				}

@@ -62,6 +62,7 @@ const defaultRotationWindow time.Duration = 10
 const noTimeout time.Duration = 0
 
 const collectTxProtocol = "CollectTxProtocol"
+const rollupTxProtocol = "RollupTxProtocol"
 
 const viewChangeSubFtCosi = "viewchange_sub_ftcosi"
 const viewChangeFtCosi = "viewchange_ftcosi"
@@ -2357,7 +2358,7 @@ func (s *Service) processOneTx(sst *stagingStateTrie, tx ClientTransaction,
 				return nil, nil, err
 			}
 		}
-
+		
 		// Insert the new instructions in the transaction, to be executed right
 		// after the current one.
 		// See https://github.com/golang/go/wiki/SliceTricks#insert for the
@@ -2372,6 +2373,10 @@ func (s *Service) processOneTx(sst *stagingStateTrie, tx ClientTransaction,
 			s.addError(tx, err)
 			return nil, nil, err
 		}
+		sstStoreAll.Record()
+
+
+
 		statesTemp = append(statesTemp, scs...)
 		statesTemp = append(statesTemp, counterScs...)
 		cin = cout
@@ -2530,7 +2535,7 @@ func (s *Service) getLeader(scID skipchain.SkipBlockID) (*network.ServerIdentity
 	return scConfig.Roster.List[0], nil
 }
 
-// getTxs is primarily used as a callback in the CollectTx protocol to retrieve
+// getTxs is primarily used as a callback in the RollupTx protocol to retrieve
 // a set of pending transactions. However, it is a very useful way to piggy
 // back additional functionalities that need to be executed at every interval,
 // such as updating the heartbeat monitor and synchronising the state.
@@ -3033,9 +3038,10 @@ func newService(c *onet.Context) (onet.Service, error) {
 		log.ErrFatal(err)
 	}
 
-	if _, err := s.ProtocolRegister(collectTxProtocol, NewCollectTxProtocol(s.getTxs)); err != nil {
+	if _, err := s.ProtocolRegister(rollupTxProtocol, NewRollupTxProtocol(s.getTxs)); err != nil {
 		return nil, xerrors.Errorf("registering protocol: %v", err)
 	}
+
 
 	// Register the view-change cosi protocols.
 	_, err = s.ProtocolRegister(viewChangeSubFtCosi, func(n *onet.TreeNodeInstance) (onet.ProtocolInstance, error) {
