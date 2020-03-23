@@ -27,12 +27,8 @@ type CollectTxProtocol struct {
 	SkipchainID       skipchain.SkipBlockID
 	LatestID          skipchain.SkipBlockID
 	MaxNumTxs         int
-
-
 	requestChan       chan structCollectTxRequest
 	responseChan      chan structCollectTxResponse
-
-
 	getTxs            getTxsCallback
 	Finish            chan bool
 	closing           chan bool
@@ -99,7 +95,6 @@ func (p *CollectTxProtocol) Start() error {
 	if len(p.LatestID) == 0 {
 		return xerrors.New("missing latest skipblock ID")
 	}
-	log.LLvl1(p.ServerIdentity(), "STARTING CollectTxProtocol")
 
 	req := &CollectTxRequest{
 		SkipchainID: p.SkipchainID,
