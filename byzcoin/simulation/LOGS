@@ -1,0 +1,289 @@
+I : fd_darwin.go:42 (platform.init.0)        - File descriptor limit is: 24576
+1 : build.go:53 (simul.startBuild)           - Deploying to localhost
+1 : build.go:144 (simul.RunTests)            - Running test with config: map[accounts:10 batchsize:1 bf:4 blockinterval:"1s" delay:10 hosts:5 keep:true rounds:1 runwait:"6000s" servers:2 simulation:"TransferCoins" suite:"Ed25519" transactions:5]
+1 : localhost.go:105 (platform.(*Localhost).Cleanup) - Nothing to clean up
+1 : localhost.go:181 (platform.(*Localhost).Start) - Starting 2 applications of /Users/hugo/student_20_byzcoin/byzcoin/simulation/build/TransferCoins
+1 : runsimul.go:144 (platform.Simulate)      - Started counting children with timeout of 1s
+1 : runsimul.go:148 (platform.Simulate)      - Found all 5 children
+1 : runsimul.go:169 (platform.Simulate)      - Starting new node TransferCoins
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:51 (contracts.(*contractCoin).Spawn) - SPAWNED
+1!: service.go:2214 (byzcoin.(*Service).processOneTx) - CREATING
+1!: coins.go:199 (main.(*SimulationService).Run) - Created account 7c49cbc3a67a3fd4230f317132066576d4c32de4427161aff6dad4b8cbb8a4b2
+1!: coins.go:199 (main.(*SimulationService).Run) - Created account d5b1f7a1e7332f68f66afdc32559f3414887deb53b936e1029b4d8adb2a8a191
+1!: coins.go:199 (main.(*SimulationService).Run) - Created account c45179cdf62d84f00fb354f8b5af65e339ba871b4b76f9eb65170a9e5854967a
+1!: coins.go:199 (main.(*SimulationService).Run) - Created account 6c264f8a4c74b1bb090972e63d18aa69941222cd17436e2825ce3f07cf3e06f9
+1!: coins.go:199 (main.(*SimulationService).Run) - Created account 49093447934df1f9ffdd11b1759c0902e3c3c5ebd63dc25881f00c65f994415c
+1!: coins.go:199 (main.(*SimulationService).Run) - Created account 93a2f0382cf5f8569dd6ead5696ab94c0b7efefcc157e65f0d28e5cc3cee6fef
+1!: coins.go:199 (main.(*SimulationService).Run) - Created account 30cfb0ee30b242e64e8d200ce77ede0197feb1392360424e404f2b8d6c3633a7
+1!: coins.go:199 (main.(*SimulationService).Run) - Created account 36ac9b72929631243b11bf178b30b9817a91e70c10b8ba1423ad39995aad6614
+1!: coins.go:199 (main.(*SimulationService).Run) - Created account a197f3149e2f79d34fa6e33e2766a57b976f6099955cad3cbc9b34f427936b58
+1!: coins.go:199 (main.(*SimulationService).Run) - Created account cdccbcaf6de65e7d1998aed8897ae441a37bcb00f45d917fe042a0aca9b7504b
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1 : coins.go:225 (main.(*SimulationService).Run) - Starting round 0
+1 : coins.go:236 (main.(*SimulationService).Run) - Sending 5 transactions with 1 instructions each
+1 : coins.go:243 (main.(*SimulationService).Run) - Sending transaction 1
+1 : coins.go:243 (main.(*SimulationService).Run) - Sending transaction 2
+1 : coins.go:243 (main.(*SimulationService).Run) - Sending transaction 3
+1 : coins.go:243 (main.(*SimulationService).Run) - Sending transaction 4
+1 : coins.go:296 (main.(*SimulationService).Run) - Sending last transaction and waiting
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2176 (byzcoin.(*Service).processOneTx) - PROCESS ONE TX
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: service.go:2219 (byzcoin.(*Service).processOneTx) - UPDATING
+1!: coins.go:316 (main.(*SimulationService).Run) - Check all balances
+1 : coins.go:329 (main.(*SimulationService).Run) - Account 7c49cbc3a67a3fd4230f317132066576d4c32de4427161aff6dad4b8cbb8a4b2 has 65531 - total should be: 65531
+1 : coins.go:329 (main.(*SimulationService).Run) - Account d5b1f7a1e7332f68f66afdc32559f3414887deb53b936e1029b4d8adb2a8a191 has 1 - total should be: 1
+1 : coins.go:329 (main.(*SimulationService).Run) - Account c45179cdf62d84f00fb354f8b5af65e339ba871b4b76f9eb65170a9e5854967a has 0 - total should be: 0
+1 : coins.go:329 (main.(*SimulationService).Run) - Account 6c264f8a4c74b1bb090972e63d18aa69941222cd17436e2825ce3f07cf3e06f9 has 1 - total should be: 1
+1 : coins.go:329 (main.(*SimulationService).Run) - Account 49093447934df1f9ffdd11b1759c0902e3c3c5ebd63dc25881f00c65f994415c has 1 - total should be: 1
+1 : coins.go:329 (main.(*SimulationService).Run) - Account 93a2f0382cf5f8569dd6ead5696ab94c0b7efefcc157e65f0d28e5cc3cee6fef has 1 - total should be: 1
+1 : coins.go:329 (main.(*SimulationService).Run) - Account 30cfb0ee30b242e64e8d200ce77ede0197feb1392360424e404f2b8d6c3633a7 has 0 - total should be: 0
+1 : coins.go:329 (main.(*SimulationService).Run) - Account 36ac9b72929631243b11bf178b30b9817a91e70c10b8ba1423ad39995aad6614 has 0 - total should be: 0
+1 : coins.go:329 (main.(*SimulationService).Run) - Account a197f3149e2f79d34fa6e33e2766a57b976f6099955cad3cbc9b34f427936b58 has 0 - total should be: 0
+1 : coins.go:329 (main.(*SimulationService).Run) - Account cdccbcaf6de65e7d1998aed8897ae441a37bcb00f45d917fe042a0aca9b7504b has 1 - total should be: 1
+1 : service.go:2496 (byzcoin.(*Service).cleanupGoroutines) - tcp://127.0.0.1:61818 closing go-routines
+1 : service.go:2496 (byzcoin.(*Service).cleanupGoroutines) - tcp://127.0.0.1:61820 closing go-routines
+1 : service.go:2496 (byzcoin.(*Service).cleanupGoroutines) - tcp://127.0.0.1:61822 closing go-routines
+1 : service.go:2496 (byzcoin.(*Service).cleanupGoroutines) - tcp://127.0.0.1:61816 closing go-routines
+1 : service.go:2496 (byzcoin.(*Service).cleanupGoroutines) - tcp://127.0.0.1:61814 closing go-routines
+1!: tx_pipeline.go:347 (byzcoin.(*txPipeline).collectTx.func1) - stopping tx collector
+1 : build.go:150 (simul.RunTests)            - Test results: {Stats: hosts = 5 bf = 4 accounts = 10 batchsize = 1 blockinterval = 1s delay = 10 depth = 1 keep = true rounds = 1 runwait = 6000s servers = 2 suite = Ed25519 transactions = 5 [0.000704 0.001734 0.001036 0.004142 0.000471] [0.000289 0.000493 0.000401 0.001603 0.000099] [0.001126 0.002206 0.001448 0.005791 0.000512] [0.300418 0.300418 0.300418 0.300418 NaN] [21578.000000 21578.000000 21578.000000 21578.000000 NaN] [0.003224 0.003224 0.003224 0.003224 NaN] [0.000056 0.000301 0.000163 0.000653 0.000120] [0.312204 0.312204 0.312204 0.312204 NaN] [24454.000000 57067.000000 46636.600000 233183.000000 12717.105166] [0.009616 0.009616 0.009616 0.009616 NaN] [0.000568 0.000568 0.000568 0.000568 NaN] [0.003944 0.003944 0.003944 0.003944 NaN] [35.000000 91.000000 51.200000 256.000000 24.742676] [29.000000 147.000000 57.600000 288.000000 51.135115] [0.000324 0.000484 0.000375 0.001876 0.000063] [2.027838 2.027838 2.027838 2.027838 NaN] [0.072768 0.072768 0.072768 0.072768 NaN] [7864.000000 117310.000000 46636.600000 233183.000000 53823.982227] [0.000376 0.000782 0.000474 0.002370 0.000174] [0.000685 0.000802 0.000732 0.002927 0.000056] [79.000000 79.000000 79.000000 79.000000 NaN] [131.000000 131.000000 131.000000 131.000000 NaN] [0.000500 0.000500 0.000500 0.000500 NaN] [0.077030 0.077030 0.077030 0.077030 NaN] [108646.000000 108646.000000 108646.000000 108646.000000 NaN] [0.000221 0.000221 0.000221 0.000221 NaN] [2.004833 2.004833 2.004833 2.004833 NaN] [0.000040 0.000286 0.000110 0.000552 0.000105] [0.000989 0.001177 0.001090 0.004359 0.000091] }
