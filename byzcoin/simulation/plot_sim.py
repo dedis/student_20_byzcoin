@@ -45,9 +45,9 @@ for delay in delays:
             data = data.reset_index()
 
 
-
             ax = data.plot.bar(
-                    y=['prepare_wall_sum','send_wall_sum','confirm_wall_avg'],\
+                    y=['prepare_wall_sum','send_wall_sum','sst_user_sum','confirm_wall_avg'],\
+
                     stacked=True,
                     )
 
