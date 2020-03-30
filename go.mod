@@ -4,7 +4,6 @@ go 1.14
 
 require (
 	github.com/BurntSushi/toml v0.3.1
-	github.com/allegro/bigcache v1.2.1 // indirect
 	github.com/aristanetworks/goarista v0.0.0-20191023202215-f096da5361bb // indirect
 	github.com/bford/golang-x-crypto v0.0.0-20160518072526-27db609c9d03
 	github.com/btcsuite/btcd v0.20.1-beta // indirect
@@ -19,10 +18,8 @@ require (
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/hashicorp/golang-lru v0.5.3 // indirect
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
-	github.com/pquerna/cachecontrol v0.0.0-20180517163645-1555304b9b35 // indirect
 	github.com/prataprc/goparsec v0.0.0-20180806094145-2600a2a4a410
 	github.com/qantik/qrgo v0.0.0-20160917134849-0c6b902c59f6
-	github.com/rs/cors v1.7.0 // indirect
 	github.com/satori/go.uuid v1.2.0
 	github.com/stretchr/testify v1.5.1
 	github.com/syndtr/goleveldb v1.0.0 // indirect
