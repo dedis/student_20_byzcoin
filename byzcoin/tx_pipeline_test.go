@@ -39,17 +39,17 @@ func txEqual(a, b ClientTransaction) bool {
 	return bytes.Equal(a.Instructions.Hash(), b.Instructions.Hash())
 }
 
-func (p *defaultMockTxProc) CollectTx() (*collectTxResult, error) {
+func (p *defaultMockTxProc) RollupTx() (*rollupTxResult, error) {
 	p.Lock()
 	defer p.Unlock()
 
 	time.Sleep(p.collectDelay) // simulate slow network/protocol
 	if p.txCtr+p.batch > len(p.txs) {
-		return &collectTxResult{}, nil
+		return &rollupTxResult{}, nil
 	}
 	out := p.txs[p.txCtr : p.txCtr+p.batch]
 	p.txCtr += p.batch
-	return &collectTxResult{Txs: out, CommonVersion: p.commonVersion}, nil
+	return &rollupTxResult{Txs: out, CommonVersion: p.commonVersion}, nil
 }
 
 func (p *defaultMockTxProc) ProcessTx(tx ClientTransaction, inState *txProcessorState) ([]*txProcessorState, error) {

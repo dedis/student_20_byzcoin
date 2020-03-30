@@ -25,7 +25,7 @@ type rollupTxResult struct {
 type txProcessor interface {
 	// RollupTx implements a blocking function that returns transactions
 	// that should go into new blocks. These transactions are not verified.
-	RollupTx() (*rollupTxResult, error)
+	RollupTx(tx ClientTransaction) (*rollupTxResult, error)
 	// ProcessTx attempts to apply the given tx to the input state and then
 	// produce new state(s). If the new tx is too big to fit inside a new
 	// state, the function will return more states. Where the older states
@@ -103,7 +103,7 @@ type defaultTxProcessor struct {
 
 
 
-func (s *defaultTxProcessor) RollupTx() (*rollupTxResult, error) {
+func (s *defaultTxProcessor) RollupTx(ctx ClientTransaction) (*rollupTxResult, error) {
 	// Need to update the config, as in the meantime a new block should have
 	// arrived with a possible new configuration.
 	bcConfig, err := s.LoadConfig(s.scID)
@@ -145,13 +145,20 @@ func (s *defaultTxProcessor) RollupTx() (*rollupTxResult, error) {
 	root := proto.(*RollupTxProtocol)
 	root.SkipchainID = s.scID
 	root.LatestID = latest.Hash
+	//root.Service = s.Service
+
+
+
+
 	// When a block is processed, we prevent conodes to send us back transactions
 	// until the next collection.
 	if !isNotProcessingBlock {
 		root.MaxNumTxs = 0
 	}
 
+	log.LLvl1("RUNNED BY EVERYONE?", s.ServerIdentity())
 	log.LLvl1("Asking", root.Roster().List, "for Txs")
+
 	if err := root.Start(); err != nil {
 		log.Error(s.ServerIdentity(), "Failed to start the protocol with error."+
 			" Start() only returns an error when the protocol is not initialised correctly,"+
@@ -167,6 +174,7 @@ func (s *defaultTxProcessor) RollupTx() (*rollupTxResult, error) {
 
 	var txs []ClientTransaction
 	commonVersion := Version(0)
+
 
 rollupTxLoop:
 	for {
@@ -199,8 +207,7 @@ rollupTxLoop:
 		}
 	}
 
-
-
+	log.LLvl1("we return here")
 	return &rollupTxResult{Txs: txs, CommonVersion: commonVersion}, nil}
 
 func (s *defaultTxProcessor) ProcessTx(tx ClientTransaction, inState *txProcessorState) ([]*txProcessorState, error) {
@@ -326,11 +333,14 @@ type txPipeline struct {
 }
 
 func (p *txPipeline) start(initialState *txProcessorState, stopSignal chan bool) {
+
+
 	p.stopCollect = make(chan bool)
 	p.ctxChan = make(chan ClientTransaction, 200)
 	p.needUpgrade = make(chan Version, 1)
 
-	p.collectTx()
+	//p.collectTx()
+	p.testTx()
 	p.processTxs(initialState)
 
 	<-stopSignal
@@ -339,6 +349,15 @@ func (p *txPipeline) start(initialState *txProcessorState, stopSignal chan bool)
 	p.wg.Wait()
 }
 
+
+func (p *txPipeline) testTx(){
+	select {
+
+	}
+
+}
+
+//TODO : we won't need this function anymore
 func (p *txPipeline) collectTx() {
 	p.wg.Add(1)
 
@@ -354,7 +373,7 @@ func (p *txPipeline) collectTx() {
 				close(p.ctxChan)
 				return
 			case <-time.After(interval / 2):
-				res, err := p.processor.RollupTx()
+				res, err := p.processor.RollupTx(ClientTransaction{})
 				if err != nil {
 					log.Error("failed to collect transactions", err)
 				}
@@ -365,7 +384,7 @@ func (p *txPipeline) collectTx() {
 
 				for _, tx := range res.Txs {
 					select {
-
+					//TODO B : use this channel in leader
 					case p.ctxChan <- tx:
 						// channel not full, do nothing
 					default:

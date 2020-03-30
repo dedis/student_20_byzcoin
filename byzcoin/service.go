@@ -133,6 +133,13 @@ type Service struct {
 	// restarting after shutdown, answer getTxs requests and so on.
 	txBuffer txBuffer
 
+	//TODO : add txPipeline
+	//Create diagram between service, tx pipeline and tx rollup
+	txPipeline *txPipeline
+	//TODO : remove this
+	testCtx ClientTransaction
+
+
 	heartbeats             heartbeats
 	heartbeatsTimeout      chan string
 	closeLeaderMonitorChan chan bool
@@ -380,6 +387,8 @@ func (s *Service) prepareTxResponse(req *AddTxRequest, tx *TxResult) (*AddTxResp
 // error value to find out if an error has occured. The caller must also check
 // AddTxResponse.Error even if the error return value is nil.
 func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
+
+	log.LLvl1("new client transaction request on skipchain:", req.SkipchainID.Short())
 	addtx := monitor.NewTimeMeasure("add_tx")
 	if len(req.Transaction.Instructions) == 0 {
 		return nil, xerrors.New("no transactions to add")
@@ -437,46 +446,117 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 	// no inclusion wait case.
 
 	if req.InclusionWait > 0 {
-		s.working.Add(1)
-		defer s.working.Done()
+			s.working.Add(1)
+			defer s.working.Done()
 
-		// Wait for InclusionWait new blocks and look if our transaction is in it.
-		interval, _, err := s.LoadBlockInfo(req.SkipchainID)
-		if err != nil {
-			return nil, xerrors.Errorf("couldn't get block info: %v", err)
-		}
-
-		ctxHash := req.Transaction.Instructions.Hash()
-		ch := s.notifications.registerForBlocks()
-		defer s.notifications.unregisterForBlocks(ch)
-
-		s.txBuffer.add(string(req.SkipchainID), req.Transaction)
-
-		// In case we don't have any blocks, because there are no transactions,
-		// have a hard timeout in twice the minimal expected time to create the
-		// blocks.
-		tooLongDur := time.Duration(req.InclusionWait) * interval * 2
-		tooLong := time.After(tooLongDur)
-
-		blocksLeft := req.InclusionWait
-
-		for {
-			select {
-			case notif := <-ch:
-				if tx := notif.getTx(ctxHash); tx != nil {
-					return s.prepareTxResponse(req, tx)
-				}
-
-				if notif.block.SkipChainID().Equal(req.SkipchainID) {
-					blocksLeft--
-				}
-				if blocksLeft == 0 {
-					return nil, xerrors.Errorf("did not find transaction after %v blocks", req.InclusionWait)
-				}
-			case <-tooLong:
-				return nil, xerrors.Errorf("transaction didn't get included after %v (2 * t_block * %d)", tooLongDur, req.InclusionWait)
+			// Wait for InclusionWait new blocks and look if our transaction is in it.
+			interval, _, err := s.LoadBlockInfo(req.SkipchainID)
+			if err != nil {
+				return nil, xerrors.Errorf("couldn't get block info: %v", err)
 			}
-		}
+
+			ctxHash := req.Transaction.Instructions.Hash()
+			ch := s.notifications.registerForBlocks()
+			defer s.notifications.unregisterForBlocks(ch)
+
+			//TODO : Init new protocol here to send txs to leader
+			//For every new tx create a new protocol, like in skipchain
+			//Create link for ctx channel
+
+			leader, err := s.getLeader(req.SkipchainID)
+			if err != nil {
+				log.LLvl1("Error getting the leader", err)
+			}
+			log.LLvl1("current leader identity", leader)
+
+			//check if leader if leader, write ctx to ctxChan
+			// if not leader start protocol
+			// create new tree point to point with leader
+			// no need for bcConfig since we create a new tree
+			bcConfig, err := s.LoadConfig(req.SkipchainID)
+			if err != nil {
+				log.Error(s.ServerIdentity(), "couldn't get configuration - this is bad and probably "+
+					"a problem with the database! ", err)
+				return nil, xerrors.Errorf("reading config: %v", err)
+			}
+
+			latest, err := s.db().GetLatestByID(req.SkipchainID)
+			if err != nil {
+				log.Errorf("Error while searching for %x", req.SkipchainID[:])
+				log.Error("DB is in bad state and cannot find skipchain anymore."+
+					" This function should never be called on a skipchain that does not exist.", err)
+				return nil, xerrors.Errorf("reading latest: %v", err)
+			}
+
+			//create new roster with self and leader
+			tree := bcConfig.Roster.GenerateNaryTree(len(bcConfig.Roster.List))
+
+			proto, err := s.CreateProtocol(rollupTxProtocol, tree)
+			if err != nil {
+				log.Error(s.ServerIdentity(), "Protocol creation failed with error."+
+					" This panic indicates that there is most likely a programmer error,"+
+					" e.g., the protocol does not exist."+
+					" Hence, we cannot recover from this failure without putting"+
+					" the server in a strange state, so we panic.", err)
+				return nil, xerrors.Errorf("creating protocol: %v", err)
+			}
+			root := proto.(*RollupTxProtocol)
+			root.SkipchainID = req.SkipchainID
+			root.LatestID = latest.Hash
+			root.OneTx <- *req
+			proto.Start()
+			log.LLvl1("SENT TX")
+			time.Sleep(10*time.Second)
+
+			/*
+			res, err := s.txPipeline.processor.RollupTx(req.Transaction)
+			if err != nil {
+				log.Error("failed to collect transactions", err)
+			}
+			log.LLvl1("got", len(res.Txs), "transactions")
+
+			s.txPipeline.ctxChan <- req.Transaction
+
+			/*
+			for _, tx := range res.Txs {
+				select {
+				//TODO B : use this channel in leader
+				case s.txPipeline.ctxChan <- tx:
+					log.LLvl1("Hello")
+					// channel not full, do nothing
+				default:
+					log.Warn("dropping transactions because there are too many")
+				}
+			}
+			*/
+
+			s.txBuffer.add(string(req.SkipchainID), req.Transaction)
+
+			// In case we don't have any blocks, because there are no transactions,
+			// have a hard timeout in twice the minimal expected time to create the
+			// blocks.
+			tooLongDur := time.Duration(req.InclusionWait) * interval * 2
+			tooLong := time.After(tooLongDur)
+
+			blocksLeft := req.InclusionWait
+
+			for {
+				select {
+				case notif := <-ch:
+					if tx := notif.getTx(ctxHash); tx != nil {
+						return s.prepareTxResponse(req, tx)
+					}
+
+					if notif.block.SkipChainID().Equal(req.SkipchainID) {
+						blocksLeft--
+					}
+					if blocksLeft == 0 {
+						return nil, xerrors.Errorf("did not find transaction after %v blocks", req.InclusionWait)
+					}
+				case <-tooLong:
+					return nil, xerrors.Errorf("transaction didn't get included after %v (2 * t_block * %d)", tooLongDur, req.InclusionWait)
+				}
+			}
 	} else {
 		s.txBuffer.add(string(req.SkipchainID), req.Transaction)
 	}
@@ -1855,7 +1935,9 @@ func loadBlockInfo(st ReadOnlyStateTrie) (time.Duration, int, error) {
 	return config.BlockInterval, config.MaxBlockSize, nil
 }
 
+
 func (s *Service) startPolling(scID skipchain.SkipBlockID) chan bool {
+	log.LLvl1("started & saved txPipeline")
 	pipeline := txPipeline{
 		processor: &defaultTxProcessor{
 			stopCollect: make(chan bool),
@@ -1863,6 +1945,15 @@ func (s *Service) startPolling(scID skipchain.SkipBlockID) chan bool {
 			Service:     s,
 		},
 	}
+	//Registering the pipeline into the service
+	s.txPipeline = &pipeline
+
+	log.LLvl1("registered rollup tx protocol")
+
+	if _, err := s.ProtocolRegister(rollupTxProtocol, NewRollupTxProtocol(s.txPipeline.ctxChan)); err != nil {
+		//return nil, xerrors.Errorf("registering protocol: %v", err)
+	}
+
 	st, err := s.getStateTrie(scID)
 	if err != nil {
 		panic("the state trie must exist because we only start polling after creating/loading the skipchain")
@@ -1885,6 +1976,7 @@ func (s *Service) startPolling(scID skipchain.SkipBlockID) chan bool {
 		s.working.Add(1)
 		defer s.working.Done()
 		s.closedMutex.Unlock()
+		log.LLvl1("starting pipeline")
 		pipeline.start(&initialState, stopChan)
 	}()
 
@@ -2416,6 +2508,8 @@ func (s *Service) getLeader(scID skipchain.SkipBlockID) (*network.ServerIdentity
 	return scConfig.Roster.List[0], nil
 }
 
+
+//TODO : remove
 // getTxs is primarily used as a callback in the RollupTx protocol to retrieve
 // a set of pending transactions. However, it is a very useful way to piggy
 // back additional functionalities that need to be executed at every interval,
@@ -2667,7 +2761,7 @@ func (s *Service) startChain(genesisID skipchain.SkipBlockID) error {
 		return xerrors.Errorf("getLeader should not return an error if roster is initialised: %v",
 			err)
 	}
-	//TODO : start rollup_tx protocol leader part here?
+
 	if leader.Equal(s.ServerIdentity()) {
 		log.Lvlf2("%s: Starting as a leader for chain %x", s.ServerIdentity(), latest.SkipChainID())
 		s.pollChanMut.Lock()
@@ -2906,9 +3000,6 @@ func newService(c *onet.Context) (onet.Service, error) {
 		log.ErrFatal(err)
 	}
 
-	if _, err := s.ProtocolRegister(rollupTxProtocol, NewRollupTxProtocol(s.getTxs)); err != nil {
-		return nil, xerrors.Errorf("registering protocol: %v", err)
-	}
 
 
 	// Register the view-change cosi protocols.
@@ -2924,7 +3015,6 @@ func newService(c *onet.Context) (onet.Service, error) {
 	if err != nil {
 		return nil, xerrors.Errorf("registering protocol: %v", err)
 	}
-
 	ver, err := s.LoadVersion()
 	if err != nil {
 		return nil, xerrors.Errorf("loading version: %v", err)
@@ -2968,5 +3058,7 @@ func newService(c *onet.Context) (onet.Service, error) {
 	if err := s.startAllChains(); err != nil {
 		return nil, xerrors.Errorf("starting chains: %v", err)
 	}
+
+
 	return s, nil
 }

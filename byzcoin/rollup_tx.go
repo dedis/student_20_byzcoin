@@ -1,8 +1,6 @@
 package byzcoin
 
 import (
-	"time"
-
 	"go.dedis.ch/cothority/v3/skipchain"
 	"go.dedis.ch/onet/v3"
 	"go.dedis.ch/onet/v3/log"
@@ -17,22 +15,29 @@ func init() {
 }
 
 // CollectTxProtocol is a protocol for collecting pending transactions.
+// Add channel here
 type RollupTxProtocol struct {
 	*onet.TreeNodeInstance
 	TxsChan           chan []ClientTransaction
+	OneTx 			  chan AddTxRequest
+	NewTx 			  AddTxRequest
+	CtxChan 		  chan ClientTransaction
 	CommonVersionChan chan Version
 	SkipchainID       skipchain.SkipBlockID
 	LatestID          skipchain.SkipBlockID
 	MaxNumTxs         int
-
 	getTxs            getTxsCallback
 	Finish            chan bool
 	closing           chan bool
 	version           int
 
-	requestChan       chan structCollectTxRequest
-	responseChan      chan structCollectTxResponse
+	addRequestChan    chan structAddTxRequest
 
+}
+
+type structAddTxRequest struct {
+	*onet.TreeNode
+	AddTxRequest
 }
 
 // CollectTxRequest is the request message that asks the receiver to send their
@@ -61,8 +66,9 @@ type structRollupTxResponse struct {
 	CollectTxResponse
 }
 
+//TODO modify signature here to add ctx chan instead
 // NewCollectTxProtocol is used for registering the protocol.
-func NewRollupTxProtocol(getTxs getTxsCallback) func(*onet.TreeNodeInstance) (onet.ProtocolInstance, error) {
+func NewRollupTxProtocol(ctxChan chan ClientTransaction) func(*onet.TreeNodeInstance) (onet.ProtocolInstance, error) {
 	return func(node *onet.TreeNodeInstance) (onet.ProtocolInstance, error) {
 		c := &RollupTxProtocol{
 			TreeNodeInstance: node,
@@ -70,14 +76,14 @@ func NewRollupTxProtocol(getTxs getTxsCallback) func(*onet.TreeNodeInstance) (on
 			// might be blocked from stopping when the receiver
 			// stops reading from this channel.
 			TxsChan:           make(chan []ClientTransaction, len(node.List())),
+			OneTx: 			   make(chan AddTxRequest),
 			CommonVersionChan: make(chan Version, len(node.List())),
 			MaxNumTxs:         defaultMaxNumTxs,
-			getTxs:            getTxs,
 			Finish:            make(chan bool),
 			closing:           make(chan bool),
 			version:           1,
 		}
-		if err := node.RegisterChannels(&c.requestChan, &c.responseChan); err != nil {
+		if err := node.RegisterChannels(&c.addRequestChan); err != nil {
 			return c, xerrors.Errorf("registering channels: %v", err)
 		}
 		return c, nil
@@ -95,31 +101,38 @@ func (p *RollupTxProtocol) Start() error {
 	if len(p.LatestID) == 0 {
 		return xerrors.New("missing latest skipblock ID")
 	}
-	log.LLvl1(p.ServerIdentity(), "starting rollup tx protocol")
+	log.LLvl1(p.ServerIdentity(), "leader started rollup tx protocol")
 
-	req := &CollectTxRequest{
-		SkipchainID: p.SkipchainID,
-		LatestID:    p.LatestID,
-		MaxNumTxs:   p.MaxNumTxs,
-		Version:     p.version,
-	}
-	// send to myself and the children
-	if err := p.SendTo(p.TreeNode(), req); err != nil {
-		return xerrors.Errorf("sending msg: %v", err)
-	}
-	// do not return an error if we fail to send to some children
-	if errs := p.SendToChildrenInParallel(req); len(errs) > 0 {
-		for _, err := range errs {
-			log.Error(p.ServerIdentity(), err)
+
+
+	p.SendTo(p.Children()[0], p.OneTx)
+	/*
+	go func () AddTxRequest {
+		var newTx AddTxRequest
+		for {
+			select {
+			case newTx = <- p.OneTx:
+				//TODO : better way to save the transaction
+				p.NewTx = newTx
+				log.LLvl1("Received new tx for skipchain :", newTx.SkipchainID.Short())
+			}
 		}
-	}
+	}()
+	*/
+
 	return nil
 }
 
 // Dispatch runs the protocol.
 func (p *RollupTxProtocol) Dispatch() error {
 	defer p.Done()
+	log.LLvl1("running the protocol...", p.ServerIdentity())
+	p.CtxChan <- (<- p.addRequestChan).Transaction
+	//log.LLvl1("NEW TX", p.NewTx.SkipchainID.Short())
 
+
+
+	/*
 	var req structCollectTxRequest
 	select {
 	case req = <-p.requestChan:
@@ -133,18 +146,16 @@ func (p *RollupTxProtocol) Dispatch() error {
 		return xerrors.New("closing down system")
 	}
 
-
-
+	*/
+	/*
 	maxOut := -1
 	if req.Version >= 1 {
 		// Leader with older version will send a maximum value of 0 which
 		// is the default value as the field is unknown.
 		maxOut = req.MaxNumTxs
 	}
-
-	//TODO : should work for all skipchain id and not only the one set by the protocol. How to get the skipchain id without getting it from the request message?
 	//TODO : how to get the last block hash without the request? Use the service from the tx processor?
-	//TODO: send the result of the callback to the root
+	//TODO : send the result of the callback to the root
 
 	resp := &CollectTxResponse{
 		Txs:            p.getTxs(req.ServerIdentity, p.Roster(), req.SkipchainID, req.LatestID, maxOut),
@@ -159,10 +170,12 @@ func (p *RollupTxProtocol) Dispatch() error {
 		if err := p.SendToParent(resp); err != nil {
 			return xerrors.Errorf("sending msg: %v", err)
 		}
-	}
+	}*/
 
 	// wait for the results to come back and write to the channel
 	defer close(p.TxsChan)
+
+	/*
 	if p.IsRoot() {
 		vb := newVersionBuffer(len(p.Children()) + 1)
 
@@ -170,6 +183,8 @@ func (p *RollupTxProtocol) Dispatch() error {
 		vb.add(p.ServerIdentity(), leaderVersion)
 
 		finish := false
+
+
 
 		for i := 0; i < len(p.List()) && !finish; i++ {
 			select {
@@ -192,6 +207,7 @@ func (p *RollupTxProtocol) Dispatch() error {
 			p.CommonVersionChan <- leaderVersion
 		}
 	}
+	*/
 	return nil
 }
 
