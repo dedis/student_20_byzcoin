@@ -34,6 +34,7 @@ type CollectTxProtocol struct {
 	closing           chan bool
 	version           int
 }
+
 //TODO B : this type of transaction should become obsolete
 // CollectTxRequest is the request message that asks the receiver to send their
 // pending transactions back to the leader.

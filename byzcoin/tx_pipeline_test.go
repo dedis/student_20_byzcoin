@@ -207,7 +207,6 @@ func TestTxPipeline(t *testing.T) {
 	testTxPipeline(t, 8, 8, 8, newDefaultMockTxProc)
 }
 
-
 /*
 func TestTxPipeline_Failure(t *testing.T) {
 	testTxPipeline(t, 8, 2, 1, newDefaultMockTxProc)
@@ -360,7 +359,6 @@ func newBigMockTxProc(t *testing.T, batch int, txs []ClientTransaction, failAt i
 	}
 }
 
-
 /*
 // TestTxPipeline_BigTx tests the situation when ProcessTx returns more than
 // one state. This event happens when the state becomes too big to fit into one
@@ -370,4 +368,4 @@ func TestTxPipeline_BigTx(t *testing.T) {
 	testTxPipeline(t, 4, 1, 4, newBigMockTxProc)
 	testTxPipeline(t, 8, 2, 8, newBigMockTxProc)
 }
- */
+*/
