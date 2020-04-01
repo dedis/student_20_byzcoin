@@ -5,14 +5,24 @@ import (
 	"go.dedis.ch/onet/v3"
 	"go.dedis.ch/onet/v3/log"
 	"go.dedis.ch/onet/v3/network"
-	"go.dedis.ch/onet/v4"
 	"golang.org/x/xerrors"
 )
 
 func init() {
-	network.RegisterMessages(CollectTxRequest{}, CollectTxResponse{})
-	_, err := onet.GlobalProtocolRegister(rollupTxProtocol, NewRollupTxProtocol)
-	log.ErrFatal(err)
+	network.RegisterMessages(structAddTxRequest{})
+
+	/*
+		newFunc := func (n *onet.TreeNodeInstance) (onet.ProtocolInstance, error){
+			proto, err := NewRollupTxProtocol(n, nil)
+			if err != nil {
+				//TODO : correct error handling
+				return nil, err
+			}
+			return proto, nil
+		}
+
+		_, err := onet.GlobalProtocolRegister(rollupTxProtocol, newFunc)
+		log.ErrFatal(err)*/
 }
 
 const rollupTxProtocol = "RollupTxProtocol"
@@ -67,16 +77,16 @@ type structRollupTxResponse struct {
 	CollectTxResponse
 }
 
-//TODO modify signature here to add ctx chan instead
+// TODO modify signature here to add ctx chan instead
 // NewCollectTxProtocol is used for registering the protocol.
-func NewRollupTxProtocol(node *onet.TreeNodeInstance) (onet.ProtocolInstance, error) {
+// was in the signature before :
+func NewRollupTxProtocol(node *onet.TreeNodeInstance, ctxChan chan ClientTransaction) (onet.ProtocolInstance, error) {
 	c := &RollupTxProtocol{
 		TreeNodeInstance: node,
 		// If we do not buffer this channel then the protocol
 		// might be blocked from stopping when the receiver
 		// stops reading from this channel.
 		TxsChan:           make(chan []ClientTransaction, len(node.List())),
-		OneTx:             make(chan AddTxRequest),
 		CommonVersionChan: make(chan Version, len(node.List())),
 		MaxNumTxs:         defaultMaxNumTxs,
 		Finish:            make(chan bool),
@@ -91,6 +101,7 @@ func NewRollupTxProtocol(node *onet.TreeNodeInstance) (onet.ProtocolInstance, er
 
 // Start starts the protocol, it should only be called on the root node.
 func (p *RollupTxProtocol) Start() error {
+	log.LLvl1(p.ServerIdentity(), "STARTED leader started rollup tx protocol")
 	if !p.IsRoot() {
 		return xerrors.New("only the root should call start")
 	}
@@ -100,9 +111,9 @@ func (p *RollupTxProtocol) Start() error {
 	if len(p.LatestID) == 0 {
 		return xerrors.New("missing latest skipblock ID")
 	}
-	log.LLvl1(p.ServerIdentity(), "leader started rollup tx protocol")
 
 	p.SendTo(p.Children()[0], p.NewTx)
+
 	/*
 		go func () AddTxRequest {
 			var newTx AddTxRequest
@@ -123,7 +134,7 @@ func (p *RollupTxProtocol) Start() error {
 // Dispatch runs the protocol.
 func (p *RollupTxProtocol) Dispatch() error {
 	defer p.Done()
-	log.LLvl1("running the protocol...", p.ServerIdentity())
+	log.LLvl1("RUNNING running the protocol...", p.ServerIdentity())
 	p.CtxChan <- (<-p.addRequestChan).Transaction
 	//log.LLvl1("NEW TX", p.NewTx.SkipchainID.Short())
 

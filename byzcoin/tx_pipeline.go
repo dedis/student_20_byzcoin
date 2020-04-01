@@ -100,9 +100,6 @@ type defaultTxProcessor struct {
 	sync.Mutex
 }
 
-
-
-
 func (s *defaultTxProcessor) RollupTx(ctx ClientTransaction) (*rollupTxResult, error) {
 	// Need to update the config, as in the meantime a new block should have
 	// arrived with a possible new configuration.
@@ -131,8 +128,6 @@ func (s *defaultTxProcessor) RollupTx(ctx ClientTransaction) (*rollupTxResult, e
 	log.Lvlf3("%s: Starting new block %d (%x) for chain %x", s.ServerIdentity(), latest.Index+1, latest.Hash, s.scID)
 	tree := bcConfig.Roster.GenerateNaryTree(len(bcConfig.Roster.List))
 
-
-
 	proto, err := s.CreateProtocol(rollupTxProtocol, tree)
 	if err != nil {
 		log.Error(s.ServerIdentity(), "Protocol creation failed with error."+
@@ -146,9 +141,6 @@ func (s *defaultTxProcessor) RollupTx(ctx ClientTransaction) (*rollupTxResult, e
 	root.SkipchainID = s.scID
 	root.LatestID = latest.Hash
 	//root.Service = s.Service
-
-
-
 
 	// When a block is processed, we prevent conodes to send us back transactions
 	// until the next collection.
@@ -174,7 +166,6 @@ func (s *defaultTxProcessor) RollupTx(ctx ClientTransaction) (*rollupTxResult, e
 
 	var txs []ClientTransaction
 	commonVersion := Version(0)
-
 
 rollupTxLoop:
 	for {
@@ -208,9 +199,11 @@ rollupTxLoop:
 	}
 
 	log.LLvl1("we return here")
-	return &rollupTxResult{Txs: txs, CommonVersion: commonVersion}, nil}
+	return &rollupTxResult{Txs: txs, CommonVersion: commonVersion}, nil
+}
 
 func (s *defaultTxProcessor) ProcessTx(tx ClientTransaction, inState *txProcessorState) ([]*txProcessorState, error) {
+	log.LLvl1("processing tx")
 	s.Lock()
 	latest := s.latest
 	s.Unlock()
@@ -333,28 +326,17 @@ type txPipeline struct {
 }
 
 func (p *txPipeline) start(initialState *txProcessorState, stopSignal chan bool) {
-
-
 	p.stopCollect = make(chan bool)
 	p.ctxChan = make(chan ClientTransaction, 200)
 	p.needUpgrade = make(chan Version, 1)
 
 	//p.collectTx()
-	p.testTx()
 	p.processTxs(initialState)
 
 	<-stopSignal
 	close(p.stopCollect)
 	p.processor.Stop()
 	p.wg.Wait()
-}
-
-
-func (p *txPipeline) testTx(){
-	select {
-
-	}
-
 }
 
 //TODO : we won't need this function anymore
@@ -433,7 +415,6 @@ func (p *txPipeline) processTxs(initialState *txProcessorState) {
 					proposalResult <- err
 				}
 
-
 				err := p.processor.ProposeUpgradeBlock(version)
 				if err != nil {
 					// Only log the error as it won't prevent normal blocks
@@ -490,8 +471,8 @@ func (p *txPipeline) processTxs(initialState *txProcessorState) {
 					proposalResult <- nil
 				}(inState)
 			case tx, ok := <-p.ctxChan:
+				log.LLvl1("We received something here")
 				select {
-
 				// This case has a higher priority so we force the select to go through it
 				// first.
 				case <-intervalChan:
@@ -499,8 +480,6 @@ func (p *txPipeline) processTxs(initialState *txProcessorState) {
 					break
 				default:
 				}
-
-
 
 				if !ok {
 					log.Lvl3("stopping txs processor")

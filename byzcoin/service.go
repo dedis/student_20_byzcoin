@@ -451,6 +451,7 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 
 	//check if leader if leader, write ctx to ctxChan
 	if s.ServerIdentity().Equal(leader) {
+		log.LLvl1("this is runned")
 		s.txPipeline.ctxChan <- req.Transaction
 	} else {
 		// if not leader start protocol
@@ -489,7 +490,6 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 		root.NewTx = *req
 		proto.Start()
 		log.LLvl1("SENT TX")
-		time.Sleep(10 * time.Second)
 	}
 
 	// Note to my future self: s.txBuffer.add used to be out here. It used to work
@@ -1038,7 +1038,7 @@ func (s *Service) SetPropagationTimeout(p time.Duration) {
 func (s *Service) NewProtocol(ti *onet.TreeNodeInstance, conf *onet.GenericConfig) (pi onet.ProtocolInstance, err error) {
 	// This is the byzcoin leader receiving a new ClienTransaction from a node.
 	if ti.ProtocolName() == rollupTxProtocol {
-		pi, err = NewRollupTxProtocol(ti)
+		pi, err = NewRollupTxProtocol(ti, s.txPipeline.ctxChan)
 		if err != nil {
 			return
 		}
@@ -1957,9 +1957,19 @@ func loadBlockInfo(st ReadOnlyStateTrie) (time.Duration, int, error) {
 
 func (s *Service) startPolling(scID skipchain.SkipBlockID) chan bool {
 	log.LLvl1("started & saved txPipeline")
+
+	latest, err := s.db().GetLatestByID(scID)
+	if err != nil {
+		log.Errorf("Error while searching for %x", scID[:])
+		log.Error("DB is in bad state and cannot find skipchain anymore."+
+			" This function should never be called on a skipchain that does not exist.", err)
+		//return nil, xerrors.Errorf("reading latest: %v", err)
+	}
+
 	pipeline := txPipeline{
 		processor: &defaultTxProcessor{
 			stopCollect: make(chan bool),
+			latest:      latest,
 			scID:        scID,
 			Service:     s,
 		},
@@ -1969,8 +1979,17 @@ func (s *Service) startPolling(scID skipchain.SkipBlockID) chan bool {
 
 	log.LLvl1("registered rollup tx protocol")
 
-	if _, err := s.ProtocolRegister(rollupTxProtocol, NewRollupTxProtocol(s.txPipeline.ctxChan)); err != nil {
-		//return nil, xerrors.Errorf("registering protocol: %v", err)
+	newFunc := func(n *onet.TreeNodeInstance) (onet.ProtocolInstance, error) {
+		proto, err := NewRollupTxProtocol(n, s.txPipeline.ctxChan)
+		if err != nil {
+			//TODO : correct error handling
+			return nil, err
+		}
+		return proto, nil
+	}
+
+	if _, err := s.ProtocolRegister(rollupTxProtocol, newFunc); err != nil {
+		panic(err)
 	}
 
 	st, err := s.getStateTrie(scID)
@@ -1998,7 +2017,6 @@ func (s *Service) startPolling(scID skipchain.SkipBlockID) chan bool {
 		log.LLvl1("starting pipeline")
 		pipeline.start(&initialState, stopChan)
 	}()
-
 	return stopChan
 }
 
