@@ -64,8 +64,8 @@ for delay in delays:
             data = data.loc[data['batch'] == b]
             data = data.reset_index()
 
-            fig, axs = plt.subplots(1, 5)
-            fig.set_size_inches(22, 6)
+            fig, axs = plt.subplots(2, 3)
+            fig.set_size_inches(16, 10)
 
             fig.suptitle(titlestring)
 
@@ -77,21 +77,21 @@ for delay in delays:
                     y= ['send_wall_sum',
                                   'prepare_wall_sum',
                                   'confirm_wall_sum'],\
-                    stacked=True, ax=axs[0])
+                    stacked=True, ax=axs[0][0])
 
-            axs[0].set_ylabel('Time in seconds')
+            axs[0][0].set_ylabel('Time in seconds')
             
             data.plot.bar(x='hosts', y=['prepare.prepare_intro_wall_sum',
                                   'prepare.create_tx_wall_sum',
-                                  'prepare.sign_wall_sum'], stacked=True, ax=axs[1])
+                                  'prepare.sign_wall_sum'], stacked=True, ax=axs[0][1])
 
-            data.plot.bar(x='hosts', y=['create_state_change_wall_sum'], stacked=True, ax=axs[2])
+            data.plot.bar(x='hosts', y=['create_state_change_wall_sum'], stacked=True, ax=axs[0][2])
 
-            data.plot.bar(x='hosts', y=['process_one_tx_wall_sum'], stacked=True, ax=axs[3])
+            data.plot.bar(x='hosts', y=['process_one_tx_wall_sum'], stacked=True, ax=axs[1][0])
 
-            data.plot.bar(x='hosts', y=['p_o_t.init_wall_sum', 'p_o_t.execute_wall_sum', 'p_o_t.increment_wall_sum', 'p_o_t.verify_wall_sum', 'p_o_t.store_wall_sum'], stacked=True, ax=axs[4])
+            data.plot.bar(x='hosts', y=['p_o_t.init_wall_sum', 'p_o_t.execute_wall_sum', 'p_o_t.increment_wall_sum', 'p_o_t.verify_wall_sum', 'p_o_t.store_wall_sum'], stacked=True, ax=axs[1][2])
 
-            [ax.set_ylim([0, 12]) for ax in axs]
+            [[ax.set_ylim([0, 12]) for ax in a] for a in axs]
 
             plt.savefig(data_dir + namestring + '.png')
             plt.close()
