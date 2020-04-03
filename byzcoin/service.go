@@ -386,8 +386,6 @@ func (s *Service) prepareTxResponse(req *AddTxRequest, tx *TxResult) (*AddTxResp
 // error value to find out if an error has occured. The caller must also check
 // AddTxResponse.Error even if the error return value is nil.
 func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
-
-	log.LLvl1("new client transaction request on skipchain:", req.SkipchainID.Short())
 	addtx := monitor.NewTimeMeasure("add_tx")
 	if len(req.Transaction.Instructions) == 0 {
 		return nil, xerrors.New("no transactions to add")
@@ -451,7 +449,6 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 
 	//check if leader if leader, write ctx to ctxChan
 	if s.ServerIdentity().Equal(leader) {
-		log.LLvl1("this is runned")
 		s.txPipeline.ctxChan <- req.Transaction
 	} else {
 		// if not leader start protocol
