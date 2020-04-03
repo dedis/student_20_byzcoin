@@ -471,7 +471,6 @@ func (p *txPipeline) processTxs(initialState *txProcessorState) {
 					proposalResult <- nil
 				}(inState)
 			case tx, ok := <-p.ctxChan:
-				log.LLvl1("We received something here")
 				select {
 				// This case has a higher priority so we force the select to go through it
 				// first.
