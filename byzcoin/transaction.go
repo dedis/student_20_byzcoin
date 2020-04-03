@@ -16,6 +16,7 @@ import (
 	"go.dedis.ch/cothority/v3/darc"
 	"go.dedis.ch/onet/v3/log"
 	"go.dedis.ch/onet/v3/network"
+	"go.dedis.ch/onet/v3/simul/monitor"
 	"go.dedis.ch/protobuf"
 	"golang.org/x/xerrors"
 )
@@ -96,6 +97,8 @@ func (args Arguments) Names() []string {
 // instructions using the same set of  signers. If some instructions need to be signed by different sets of signers,
 // then use the SignWith method of Instruction.
 func (ctx *ClientTransaction) FillSignersAndSignWith(signers ...darc.Signer) error {
+	sign := monitor.NewTimeMeasure("prepare.sign")
+	defer sign.Record()
 	var ids []darc.Identity
 	for _, signer := range signers {
 		ids = append(ids, signer.Identity())

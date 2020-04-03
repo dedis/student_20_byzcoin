@@ -2183,11 +2183,13 @@ func (s *Service) addError(tx ClientTransaction, err error) {
 // from the trie should be read from sst and not the service.
 func (s *Service) processOneTx(sst *stagingStateTrie, tx ClientTransaction,
 	scID skipchain.SkipBlockID) (StateChanges, *stagingStateTrie, error) {
-	
+
 	log.LLvl1("Processing one tx")
 
 	process_one_tx := monitor.NewTimeMeasure("process_one_tx")
 	defer process_one_tx.Record()
+
+	p_o_t_init := monitor.NewTimeMeasure("p_o_t.init")
 
 	// Make a new trie for each instruction. If the instruction is
 	// sucessfully implemented and changes applied, then keep it
@@ -2196,7 +2198,13 @@ func (s *Service) processOneTx(sst *stagingStateTrie, tx ClientTransaction,
 	h := tx.Instructions.Hash()
 	var statesTemp StateChanges
 	var cin []Coin
+
+	p_o_t_init.Record()
+
 	for _, instr := range tx.Instructions {
+
+		p_o_t_execute := monitor.NewTimeMeasure("p_o_t.execute")
+
 		scs, cout, err := s.executeInstruction(sst, cin, instr, h, scID)
 		if err != nil {
 			_, _, cid, _, err2 := sst.GetValues(instr.InstanceID.Slice())
@@ -2209,6 +2217,10 @@ func (s *Service) processOneTx(sst *stagingStateTrie, tx ClientTransaction,
 			return nil, nil, err
 		}
 
+		p_o_t_execute.Record()
+
+		p_o_t_increment := monitor.NewTimeMeasure("p_o_t.increment")
+
 		counterScs, err := incrementSignerCounters(sst, instr.SignerIdentities)
 		if err != nil {
 			err = xerrors.Errorf("%s failed to update signature counters: %v",
@@ -2216,6 +2228,10 @@ func (s *Service) processOneTx(sst *stagingStateTrie, tx ClientTransaction,
 			s.addError(tx, err)
 			return nil, nil, err
 		}
+
+		p_o_t_increment.Record()
+
+		p_o_t_verify := monitor.NewTimeMeasure("p_o_t.verify")
 
 		// Verify the validity of the state-changes:
 		//  - refuse to update non-existing instances
@@ -2261,6 +2277,11 @@ func (s *Service) processOneTx(sst *stagingStateTrie, tx ClientTransaction,
 				return nil, nil, err
 			}
 		}
+
+		p_o_t_verify.Record()
+
+		p_o_t_store := monitor.NewTimeMeasure("p_o_t.store")
+
 		if err = sst.StoreAll(counterScs); err != nil {
 			err = xerrors.Errorf("%s StoreAll failed to add counter changes: %v",
 				s.ServerIdentity(), err)
@@ -2270,6 +2291,8 @@ func (s *Service) processOneTx(sst *stagingStateTrie, tx ClientTransaction,
 		statesTemp = append(statesTemp, scs...)
 		statesTemp = append(statesTemp, counterScs...)
 		cin = cout
+
+		p_o_t_store.Record()
 	}
 	if len(cin) != 0 {
 		log.Lvl2(s.ServerIdentity(), "Leftover coins detected, discarding.")

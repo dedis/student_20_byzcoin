@@ -256,6 +256,8 @@ func (s *SimulationService) Run(config *onet.SimulationConfig) error {
 
 			prepare := monitor.NewTimeMeasure("prepare")
 			for i := 0; i < insts; i++ {
+				prepare_intro := monitor.NewTimeMeasure("prepare.prepare_intro")
+
 				randomAccountNumber := rand.Intn(max-min+1) + min
 				rAccount := txAccounts.Instructions[randomAccountNumber].DeriveID("")
 				instrs := append(tx.Instructions, byzcoin.Instruction{
@@ -280,6 +282,8 @@ func (s *SimulationService) Run(config *onet.SimulationConfig) error {
 				txNonce++
 				balance[rAccount.String()] = balance[rAccount.String()] + binary.LittleEndian.Uint64(coinOne)
 				balance[account1.String()] = balance[account1.String()] - 1
+
+				prepare_intro.Record()
 
 				tx, err = c.CreateTransaction(instrs...)
 				if err != nil {

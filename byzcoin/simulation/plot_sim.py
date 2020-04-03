@@ -36,13 +36,21 @@ keep = list(set(df['keep']))
 batch = list(set(df['batch']))
 
 def plot_columns(ax, columns):
-    last = None
-    for column in columns:
-        ax.bar(ind, data[column], label=column[:-9], bottom=last)
-        last = data[column]
+    for i in range(len(columns)):
+        column = columns[i]
+        d = data[column]
+        ax.bar(i, d, label=column[:-9])
 
     ax.set_xlabel('transactions / batch size')
     ax.legend(bbox_to_anchor=(0.1, 0.5), loc='center left',)
+
+# Monitoring tree
+# - send
+# - prepare
+#   - prepare_intro
+#   - create_tx
+#   - sign
+# - confirm
 
 for delay in delays:
     for k in keep:
@@ -56,52 +64,34 @@ for delay in delays:
             data = data.loc[data['batch'] == b]
             data = data.reset_index()
 
-            ind = ("2/5")
-
-            fig, axs = plt.subplots(1, 2)
+            fig, axs = plt.subplots(1, 5)
+            fig.set_size_inches(22, 6)
 
             fig.suptitle(titlestring)
 
-            plot_columns(axs[0], ['prepare_user_sum',
-                                  'send_user_sum',
-                                  'confirm_user_sum'])
+            #plot_columns(axs[0], ['send_user_sum',
+            #                      'prepare_user_sum',
+            #                      'confirm_user_sum'])
+            data.plot.bar(\
+                    x='hosts',\
+                    y= ['send_wall_sum',
+                                  'prepare_wall_sum',
+                                  'confirm_wall_sum'],\
+                    stacked=True, ax=axs[0])
 
             axs[0].set_ylabel('Time in seconds')
             
-            #data.plot(y='full_simulation_user_sum', marker='o')
+            data.plot.bar(x='hosts', y=['prepare.prepare_intro_wall_sum',
+                                  'prepare.create_tx_wall_sum',
+                                  'prepare.sign_wall_sum'], stacked=True, ax=axs[1])
 
-            #data.plot.bar(
-            #        y=[
-            #            'prepare_user_sum',
-            #            'send_user_sum',
-            #            'confirm_user_sum',
-            #            #'collect_tx_user_sum',
-            #            #'process_tx_user_sum',
-            #            #'create_new_block_user_sum',
-            #            #'create_state_change_user_sum',
-            #            #'update_trie_callback_user_sum',
-            #            #'process_one_tx_user_sum'
-            #        ], stacked=True)
+            data.plot.bar(x='hosts', y=['create_state_change_wall_sum'], stacked=True, ax=axs[2])
 
-            plot_columns(axs[1], ['create_new_block_user_sum',
-                                  'create_state_change_user_sum',
-                                  'update_trie_callback_user_sum',
-                                  'process_one_tx_user_sum'])
+            data.plot.bar(x='hosts', y=['process_one_tx_wall_sum'], stacked=True, ax=axs[3])
 
-            #data.plot(y='full_simulation_user_sum', marker='o')
+            data.plot.bar(x='hosts', y=['p_o_t.init_wall_sum', 'p_o_t.execute_wall_sum', 'p_o_t.increment_wall_sum', 'p_o_t.verify_wall_sum', 'p_o_t.store_wall_sum'], stacked=True, ax=axs[4])
 
-            #data.plot.bar(
-            #        y=[
-            #            #'prepare_user_sum',
-            #            #'send_user_sum',
-            #            #'confirm_user_sum',
-            #            #'collect_tx_user_sum',
-            #            #'process_tx_user_sum',
-            #            'create_new_block_user_sum',
-            #            'create_state_change_user_sum',
-            #            'update_trie_callback_user_sum',
-            #            'process_one_tx_user_sum'
-            #        ], stacked=True)
+            [ax.set_ylim([0, 12]) for ax in axs]
 
             plt.savefig(data_dir + namestring + '.png')
             plt.close()

@@ -14,6 +14,7 @@ import (
 	"go.dedis.ch/onet/v3"
 	"go.dedis.ch/onet/v3/log"
 	"go.dedis.ch/onet/v3/network"
+	"go.dedis.ch/onet/v3/simul/monitor"
 	"go.dedis.ch/protobuf"
 	"golang.org/x/xerrors"
 )
@@ -133,6 +134,8 @@ func (c *Client) GetAllByzCoinIDs(si *network.ServerIdentity) (*GetAllByzCoinIDs
 
 // CreateTransaction creates a transaction from a list of instructions.
 func (c *Client) CreateTransaction(instrs ...Instruction) (ClientTransaction, error) {
+	create_tx := monitor.NewTimeMeasure("prepare.create_tx")
+	defer create_tx.Record()
 	if c.Latest == nil {
 		if _, err := c.GetChainConfig(); err != nil {
 			return ClientTransaction{}, xerrors.Errorf("chain config: %v", err)
@@ -162,6 +165,8 @@ func (c *Client) AddTransaction(tx ClientTransaction) (*AddTxResponse, error) {
 // any feedback on the transaction. The Client's Roster and ID should be
 // initialized before calling this method (see NewClientFromConfig).
 func (c *Client) AddTransactionAndWait(tx ClientTransaction, wait int) (*AddTxResponse, error) {
+	addtxApi := monitor.NewTimeMeasure("add_tx_api")
+	defer addtxApi.Record()
 	if c.Genesis == nil {
 		if err := c.fetchGenesis(); err != nil {
 			return nil, xerrors.Errorf("fetching genesis: %v", err)
