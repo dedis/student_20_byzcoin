@@ -11,7 +11,7 @@ import (
 func init() {
 	network.RegisterMessages(structAddTxRequest{})
 
-	/*
+		/*
 		newFunc := func (n *onet.TreeNodeInstance) (onet.ProtocolInstance, error){
 			proto, err := NewRollupTxProtocol(n, nil)
 			if err != nil {

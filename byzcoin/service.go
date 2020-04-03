@@ -1956,7 +1956,7 @@ func loadBlockInfo(st ReadOnlyStateTrie) (time.Duration, int, error) {
 }
 
 func (s *Service) startPolling(scID skipchain.SkipBlockID) chan bool {
-	log.LLvl1("started & saved txPipeline")
+	log.LLvl1("started & saved txPipeline at", s.ServerIdentity())
 
 	latest, err := s.db().GetLatestByID(scID)
 	if err != nil {
@@ -2378,14 +2378,14 @@ func (s *Service) processOneTx(sst *stagingStateTrie, tx ClientTransaction,
 		}
 
 		//TODO : check how long this takes
-		sstStoreAll := monitor.NewTimeMeasure("sst")
+		//sstStoreAll := monitor.NewTimeMeasure("sst")
 		if err = sst.StoreAll(counterScs); err != nil {
 			err = xerrors.Errorf("%s StoreAll failed to add counter changes: %v",
 				s.ServerIdentity(), err)
 			s.addError(tx, err)
 			return nil, nil, err
 		}
-		sstStoreAll.Record()
+		//sstStoreAll.Record()
 
 		statesTemp = append(statesTemp, scs...)
 		statesTemp = append(statesTemp, counterScs...)
