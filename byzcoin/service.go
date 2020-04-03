@@ -7,6 +7,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
+	"go.dedis.ch/onet/v3/simul/monitor"
 	"math"
 	"net"
 	"net/http"
@@ -2010,7 +2011,7 @@ func loadBlockInfo(st ReadOnlyStateTrie) (time.Duration, int, error) {
 }
 
 func (s *Service) startPolling(scID skipchain.SkipBlockID) chan bool {
-	log.LLvl1("started & saved txPipeline")
+	log.LLvl1("started & saved txPipeline at", s.ServerIdentity())
 
 	latest, err := s.db().GetLatestByID(scID)
 	if err != nil {
@@ -2500,7 +2501,7 @@ func (s *Service) processOneTx(sst *stagingStateTrie, tx ClientTransaction,
 			s.addError(tx, err)
 			return nil, nil, err
 		}
-		sstStoreAll.Record()
+		//sstStoreAll.Record()
 
 		statesTemp = append(statesTemp, scs...)
 		statesTemp = append(statesTemp, counterScs...)

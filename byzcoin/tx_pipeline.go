@@ -25,7 +25,7 @@ type rollupTxResult struct {
 type txProcessor interface {
 	// RollupTx implements a blocking function that returns transactions
 	// that should go into new blocks. These transactions are not verified.
-	RollupTx(tx ClientTransaction) (*rollupTxResult, error)
+	RollupTx() (*rollupTxResult, error)
 	// ProcessTx attempts to apply the given tx to the input state and then
 	// produce new state(s). If the new tx is too big to fit inside a new
 	// state, the function will return more states. Where the older states
@@ -100,7 +100,7 @@ type defaultTxProcessor struct {
 	sync.Mutex
 }
 
-func (s *defaultTxProcessor) RollupTx(ctx ClientTransaction) (*rollupTxResult, error) {
+func (s *defaultTxProcessor) RollupTx() (*rollupTxResult, error) {
 	// Need to update the config, as in the meantime a new block should have
 	// arrived with a possible new configuration.
 	bcConfig, err := s.LoadConfig(s.scID)
@@ -362,7 +362,7 @@ func (p *txPipeline) collectTx() {
 				close(p.ctxChan)
 				return
 			case <-time.After(interval / 2):
-				res, err := p.processor.RollupTx(ClientTransaction{})
+				res, err := p.processor.RollupTx()
 				if err != nil {
 					log.Error("failed to collect transactions", err)
 				}
