@@ -10,19 +10,18 @@ import (
 
 func init() {
 	network.RegisterMessages(structAddTxRequest{})
-
-		/*
-		newFunc := func (n *onet.TreeNodeInstance) (onet.ProtocolInstance, error){
-			proto, err := NewRollupTxProtocol(n, nil)
-			if err != nil {
-				//TODO : correct error handling
-				return nil, err
-			}
-			return proto, nil
+	/*
+	newFunc := func (n *onet.TreeNodeInstance) (onet.ProtocolInstance, error){
+		proto, err := NewRollupTxProtocol(n, nil)
+		if err != nil {
+			//TODO : correct error handling
+			return nil, err
 		}
+		return proto, nil
+	}
 
-		_, err := onet.GlobalProtocolRegister(rollupTxProtocol, newFunc)
-		log.ErrFatal(err)*/
+	_, err := onet.GlobalProtocolRegister(rollupTxProtocol, newFunc)
+	log.ErrFatal(err)*/
 }
 
 const rollupTxProtocol = "RollupTxProtocol"
@@ -101,7 +100,7 @@ func NewRollupTxProtocol(node *onet.TreeNodeInstance, ctxChan chan ClientTransac
 
 // Start starts the protocol, it should only be called on the root node.
 func (p *RollupTxProtocol) Start() error {
-	log.LLvl1(p.ServerIdentity(), "STARTED leader started rollup tx protocol")
+	log.LLvl1(p.ServerIdentity(), "leader started rollup tx protocol")
 	if !p.IsRoot() {
 		return xerrors.New("only the root should call start")
 	}
@@ -134,8 +133,10 @@ func (p *RollupTxProtocol) Start() error {
 // Dispatch runs the protocol.
 func (p *RollupTxProtocol) Dispatch() error {
 	defer p.Done()
-	log.LLvl1("RUNNING running the protocol...", p.ServerIdentity())
+	log.LLvl1("running the protocol...", p.ServerIdentity())
+	log.LLvl1("byzcoin version: ", p.getByzcoinVersion())
 	p.CtxChan <- (<-p.addRequestChan).Transaction
+	log.LLvl1("bugging when sending the transaction")
 	//log.LLvl1("NEW TX", p.NewTx.SkipchainID.Short())
 
 	/*
