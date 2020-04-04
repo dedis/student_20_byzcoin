@@ -25,7 +25,7 @@ type rollupTxResult struct {
 type txProcessor interface {
 	// RollupTx implements a blocking function that returns transactions
 	// that should go into new blocks. These transactions are not verified.
-	RollupTx() (*rollupTxResult, error)
+	//RollupTx() (*rollupTxResult, error)
 	// ProcessTx attempts to apply the given tx to the input state and then
 	// produce new state(s). If the new tx is too big to fit inside a new
 	// state, the function will return more states. Where the older states
@@ -99,7 +99,7 @@ type defaultTxProcessor struct {
 	latest      *skipchain.SkipBlock
 	sync.Mutex
 }
-
+/*
 func (s *defaultTxProcessor) RollupTx() (*rollupTxResult, error) {
 	// Need to update the config, as in the meantime a new block should have
 	// arrived with a possible new configuration.
@@ -155,7 +155,6 @@ func (s *defaultTxProcessor) RollupTx() (*rollupTxResult, error) {
 	}
 	*/
 
-	log.LLvl1("RUNNED BY EVERYONE?", s.ServerIdentity())
 	log.LLvl1("Asking", root.Roster().List, "for Txs")
 
 	if err := root.Start(); err != nil {
@@ -207,7 +206,7 @@ rollupTxLoop:
 
 	log.LLvl1("we return here")
 	return &rollupTxResult{Txs: txs, CommonVersion: commonVersion}, nil
-}
+}*/
 
 func (s *defaultTxProcessor) ProcessTx(tx ClientTransaction, inState *txProcessorState) ([]*txProcessorState, error) {
 	log.LLvl1("processing tx")
@@ -346,6 +345,8 @@ func (p *txPipeline) start(initialState *txProcessorState, stopSignal chan bool)
 	p.wg.Wait()
 }
 
+
+/*
 //TODO : we won't need this function anymore
 func (p *txPipeline) collectTx() {
 	p.wg.Add(1)
@@ -384,7 +385,7 @@ func (p *txPipeline) collectTx() {
 		}
 	}()
 }
-
+*/
 var maxTxHashes = 1000
 
 // processTxs consumes transactions and computes the new txResults
