@@ -9,19 +9,9 @@ import (
 )
 
 func init() {
-	network.RegisterMessages(structAddTxRequest{})
-	/*
-	newFunc := func (n *onet.TreeNodeInstance) (onet.ProtocolInstance, error){
-		proto, err := NewRollupTxProtocol(n, nil)
-		if err != nil {
-			//TODO : correct error handling
-			return nil, err
-		}
-		return proto, nil
-	}
-
-	_, err := onet.GlobalProtocolRegister(rollupTxProtocol, newFunc)
-	log.ErrFatal(err)*/
+	network.RegisterMessages(RollupTxResponse{})
+	_, err := onet.GlobalProtocolRegister(rollupTxProtocol, NewRollupTxProtocol)
+	log.ErrFatal(err)
 }
 
 const rollupTxProtocol = "RollupTxProtocol"
@@ -31,7 +21,7 @@ const rollupTxProtocol = "RollupTxProtocol"
 type RollupTxProtocol struct {
 	*onet.TreeNodeInstance
 	TxsChan           chan []ClientTransaction
-	NewTx             AddTxRequest
+	NewTx             *AddTxRequest
 	CtxChan           chan ClientTransaction
 	CommonVersionChan chan Version
 	SkipchainID       skipchain.SkipBlockID
@@ -47,7 +37,7 @@ type RollupTxProtocol struct {
 
 type structAddTxRequest struct {
 	*onet.TreeNode
-	AddTxRequest
+	*AddTxRequest
 }
 
 // CollectTxRequest is the request message that asks the receiver to send their
@@ -79,7 +69,7 @@ type structRollupTxResponse struct {
 // TODO modify signature here to add ctx chan instead
 // NewCollectTxProtocol is used for registering the protocol.
 // was in the signature before :
-func NewRollupTxProtocol(node *onet.TreeNodeInstance, ctxChan chan ClientTransaction) (onet.ProtocolInstance, error) {
+func NewRollupTxProtocol(node *onet.TreeNodeInstance) (onet.ProtocolInstance, error) {
 	c := &RollupTxProtocol{
 		TreeNodeInstance: node,
 		// If we do not buffer this channel then the protocol
@@ -110,7 +100,7 @@ func (p *RollupTxProtocol) Start() error {
 	if len(p.LatestID) == 0 {
 		return xerrors.New("missing latest skipblock ID")
 	}
-
+	log.Print("children", p.Children()[0], p.ServerIdentity())
 	p.SendTo(p.Children()[0], p.NewTx)
 
 	/*
@@ -133,27 +123,11 @@ func (p *RollupTxProtocol) Start() error {
 // Dispatch runs the protocol.
 func (p *RollupTxProtocol) Dispatch() error {
 	defer p.Done()
+	//TODO : should we close this channel?
+	defer close(p.CtxChan)
 	log.LLvl1("running the protocol...", p.ServerIdentity())
-	log.LLvl1("byzcoin version: ", p.getByzcoinVersion())
 	p.CtxChan <- (<-p.addRequestChan).Transaction
-	log.LLvl1("bugging when sending the transaction")
-	//log.LLvl1("NEW TX", p.NewTx.SkipchainID.Short())
 
-	/*
-		var req structCollectTxRequest
-		select {
-		case req = <-p.requestChan:
-		case <-p.Finish:
-			return nil
-		case <-time.After(time.Second):
-			// This timeout checks whether the root started the protocol,
-			// it is not like our usual timeout that detect failures.
-			//return xerrors.New("did not receive request")
-		case <-p.closing:
-			return xerrors.New("closing down system")
-		}
-
-	*/
 	/*
 		maxOut := -1
 		if req.Version >= 1 {

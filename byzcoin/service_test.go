@@ -205,7 +205,6 @@ func testAddTransaction(t *testing.T, blockInterval time.Duration, sendToIdx int
 	// add the first tx
 	log.Lvl1("adding the first tx")
 	tx1, err := createOneClientTxWithCounter(s.darc.GetBaseID(), dummyContract, s.value, s.signer, 1)
-	require.NoError(t, err)
 	akvresp, err = s.service().AddTransaction(&AddTxRequest{
 		Version:       CurrentVersion,
 		SkipchainID:   s.genesis.SkipChainID(),

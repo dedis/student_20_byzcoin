@@ -25,7 +25,7 @@ type rollupTxResult struct {
 type txProcessor interface {
 	// RollupTx implements a blocking function that returns transactions
 	// that should go into new blocks. These transactions are not verified.
-	//RollupTx() (*rollupTxResult, error)
+	RollupTx() (*rollupTxResult, error)
 	// ProcessTx attempts to apply the given tx to the input state and then
 	// produce new state(s). If the new tx is too big to fit inside a new
 	// state, the function will return more states. Where the older states
@@ -99,7 +99,7 @@ type defaultTxProcessor struct {
 	latest      *skipchain.SkipBlock
 	sync.Mutex
 }
-/*
+
 func (s *defaultTxProcessor) RollupTx() (*rollupTxResult, error) {
 	// Need to update the config, as in the meantime a new block should have
 	// arrived with a possible new configuration.
@@ -125,9 +125,9 @@ func (s *defaultTxProcessor) RollupTx() (*rollupTxResult, error) {
 	s.latest = latest
 	s.Unlock()
 
+
 	log.Lvlf3("%s: Starting new block %d (%x) for chain %x", s.ServerIdentity(), latest.Index+1, latest.Hash, s.scID)
 	tree := bcConfig.Roster.GenerateNaryTree(len(bcConfig.Roster.List))
-
 	proto, err := s.CreateProtocol(rollupTxProtocol, tree)
 	if err != nil {
 		log.Error(s.ServerIdentity(), "Protocol creation failed with error."+
@@ -150,6 +150,7 @@ func (s *defaultTxProcessor) RollupTx() (*rollupTxResult, error) {
 
 	log.LLvl1("Asking", root.Roster().List, "for Txs")
 
+	/*
 	if err := root.Start(); err != nil {
 		log.Error(s.ServerIdentity(), "Failed to start the protocol with error."+
 			" Start() only returns an error when the protocol is not initialised correctly,"+
@@ -157,6 +158,9 @@ func (s *defaultTxProcessor) RollupTx() (*rollupTxResult, error) {
 			" If you see this message then there may be a programmer error.", err)
 		return nil, xerrors.Errorf("starting protocol: %v", err)
 	}
+	*/
+
+
 
 	// When we poll, the child nodes must reply within half of the block
 	// interval, because we'll use the other half to process the
@@ -173,7 +177,11 @@ rollupTxLoop:
 			// The value gives a version that is the same for a threshold of conodes but it
 			// can be the latest version available so it needs to check that to not create a
 			// block to upgrade from version x to x (which is not an upgrade per se).
-		case newTxs, more := <-root.TxsChan:
+		case newTxs, _ := <-root.CtxChan:
+			log.Print("RECEIVED SOMETHING HERE?", newTxs)
+			txs = append(txs, newTxs)
+			break rollupTxLoop
+			/*
 			if more {
 				for _, ct := range newTxs {
 					txsz := txSize(TxResult{ClientTransaction: ct})
@@ -184,8 +192,8 @@ rollupTxLoop:
 					}
 				}
 			} else {
-				break rollupTxLoop
-			}
+
+			}*/
 		case <-protocolTimeout:
 			log.Lvl2(s.ServerIdentity(), "timeout while collecting transactions from other nodes")
 			close(root.Finish)
@@ -199,10 +207,9 @@ rollupTxLoop:
 
 	log.LLvl1("we return here")
 	return &rollupTxResult{Txs: txs, CommonVersion: commonVersion}, nil
-}*/
+}
 
 func (s *defaultTxProcessor) ProcessTx(tx ClientTransaction, inState *txProcessorState) ([]*txProcessorState, error) {
-	log.LLvl1("processing tx")
 	s.Lock()
 	latest := s.latest
 	s.Unlock()
@@ -330,7 +337,9 @@ func (p *txPipeline) start(initialState *txProcessorState, stopSignal chan bool)
 	p.needUpgrade = make(chan Version, 1)
 
 	//p.collectTx()
+	//TODO : here we should replace the collectTx method?
 	p.processTxs(initialState)
+
 
 	<-stopSignal
 	close(p.stopCollect)
@@ -383,6 +392,7 @@ var maxTxHashes = 1000
 
 // processTxs consumes transactions and computes the new txResults
 func (p *txPipeline) processTxs(initialState *txProcessorState) {
+	log.Print("PROCESSING TXS")
 	var proposing bool
 	// always use the latest one when adding new
 	currentState := []*txProcessorState{initialState}

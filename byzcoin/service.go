@@ -471,23 +471,29 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 		//create new roster with self and leader
 		//tree := bcConfig.Roster.GenerateNaryTree(len(bcConfig.Roster.List))
 		list := make([]*network.ServerIdentity, 0)
-		list = append(list, []*network.ServerIdentity{leader, s.ServerIdentity()}...)
+		list = append(list, []*network.ServerIdentity{s.ServerIdentity(), leader}...)
 		newRost := onet.NewRoster(list)
-		tree := newRost.GenerateNaryTree(len(newRost.List))
 
+
+		tree := newRost.GenerateNaryTree(len(newRost.List))
+		/*
 		newFunc := func(n *onet.TreeNodeInstance) (onet.ProtocolInstance, error) {
-			proto, err := NewRollupTxProtocol(n,  nil)
+			proto, err := NewRollupTxProtocol(n)
 			if err != nil {
 				//TODO : correct error handling
+				log.LLvl1("ERROR CREATING THE ROLLUP TX", err)
 				return nil, err
 			}
 			return proto, nil
 		}
 
+
 		log.LLvl1("registering again?", s.ServerIdentity())
 		if _, err := s.ProtocolRegister(rollupTxProtocol, newFunc); err != nil {
 			panic(err)
 		}
+
+		*/
 
 		proto, err := s.CreateProtocol(rollupTxProtocol, tree)
 		if err != nil {
@@ -501,7 +507,7 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 		root := proto.(*RollupTxProtocol)
 		root.SkipchainID = req.SkipchainID
 		root.LatestID = latest.Hash
-		root.NewTx = *req
+		root.NewTx = req
 		err = proto.Start()
 		if err != nil {
 			log.LLvl1("Error starting the protocol", err)
@@ -529,15 +535,15 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 		ctxHash := req.Transaction.Instructions.Hash()
 		ch := s.notifications.registerForBlocks()
 		defer s.notifications.unregisterForBlocks(ch)
+
+		res, err := s.txPipeline.processor.RollupTx()
+		if err != nil {
+			log.Error("failed to collect transactions", err)
+		}
+		log.LLvl1("got", len(res.Txs), "transactions")
+
+		//s.txPipeline.ctxChan <- req.Transaction
 		/*
-			res, err := s.txPipeline.processor.RollupTx(req.Transaction)
-			if err != nil {
-				log.Error("failed to collect transactions", err)
-			}
-			log.LLvl1("got", len(res.Txs), "transactions")
-
-			s.txPipeline.ctxChan <- req.Transaction
-
 			/*
 			for _, tx := range res.Txs {
 				select {
@@ -1054,14 +1060,17 @@ func (s *Service) SetPropagationTimeout(p time.Duration) {
 // Here we use it to pass our s.txPipeline.ctxChan to the RollupTxProtocol.
 func (s *Service) NewProtocol(ti *onet.TreeNodeInstance, conf *onet.GenericConfig) (pi onet.ProtocolInstance, err error) {
 	// This is the byzcoin leader receiving a new ClientTransaction from a node.
+	log.Print("protocol name", ti.ProtocolName())
 	if ti.ProtocolName() == rollupTxProtocol {
-		pi, err = NewRollupTxProtocol(ti, s.txPipeline.ctxChan)
+		pi, err = NewRollupTxProtocol(ti)
 		if err != nil {
 			log.LLvl1("Error calling new proto", err)
 			return
 		}
 
 		rtx := pi.(*RollupTxProtocol)
+		log.Print("server id", s.ServerIdentity())
+		log.Print("ctx chan", s.txPipeline.ctxChan)
 		rtx.CtxChan = s.txPipeline.ctxChan
 	}
 	return
@@ -1994,19 +2003,6 @@ func (s *Service) startPolling(scID skipchain.SkipBlockID) chan bool {
 	s.txPipeline = &pipeline
 
 	log.LLvl1("registered rollup tx protocol", s.ServerIdentity())
-
-	newFunc := func(n *onet.TreeNodeInstance) (onet.ProtocolInstance, error) {
-		proto, err := NewRollupTxProtocol(n, s.txPipeline.ctxChan)
-		if err != nil {
-			//TODO : correct error handling
-			return nil, err
-		}
-		return proto, nil
-	}
-
-	if _, err := s.ProtocolRegister(rollupTxProtocol, newFunc); err != nil {
-		panic(err)
-	}
 
 	st, err := s.getStateTrie(scID)
 	if err != nil {
