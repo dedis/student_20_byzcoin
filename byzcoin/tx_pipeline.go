@@ -155,7 +155,7 @@ func (s *defaultTxProcessor) RollupTx() (*rollupTxResult, error) {
 	}
 	*/
 
-	log.LLvl1("Asking", root.Roster().List, "for Txs")
+
 
 	/*
 	if err := root.Start(); err != nil {
@@ -212,7 +212,6 @@ rollupTxLoop:
 		}
 	}
 
-	log.LLvl1("we return here")
 	return &rollupTxResult{Txs: txs, CommonVersion: commonVersion}, nil
 }
 
@@ -343,10 +342,9 @@ func (p *txPipeline) start(initialState *txProcessorState, stopSignal chan bool)
 	p.ctxChan = make(chan ClientTransaction, 200)
 	p.needUpgrade = make(chan Version, 1)
 
+	//TODO : Should we replace the collectTx method?
 	//p.collectTx()
-	//TODO : here we should replace the collectTx method?
 	p.processTxs(initialState)
-
 
 	<-stopSignal
 	close(p.stopCollect)
@@ -399,7 +397,6 @@ var maxTxHashes = 1000
 
 // processTxs consumes transactions and computes the new txResults
 func (p *txPipeline) processTxs(initialState *txProcessorState) {
-	log.Print("PROCESSING TXS")
 	var proposing bool
 	// always use the latest one when adding new
 	currentState := []*txProcessorState{initialState}
