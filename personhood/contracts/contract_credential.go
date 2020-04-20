@@ -41,6 +41,8 @@ type ContractCredential struct {
 
 // VerifyInstruction allows for an unsigned "recover" command that will be verified later.
 func (c ContractCredential) VerifyInstruction(rst byzcoin.ReadOnlyStateTrie, inst byzcoin.Instruction, ctxHash []byte) error {
+	verify_ContractCredential := monitor.NewTimeMeasure("verify.ContractCredential")
+	defer verify_ContractCredential.Record()
 	// Because doing a threshold-definition using AND and OR in a darc can get very complex, this contract
 	// does its own threshold verification and thus cannot rely on the darc to verify that the "recover" command
 	// is valid.

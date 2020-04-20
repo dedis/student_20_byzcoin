@@ -60,6 +60,9 @@ func ContractPopPartyFromBytes(in []byte) (byzcoin.Contract, error) {
 // VerifyInstruction overrides the basic VerifyInstruction in case of a "mine" command, because this command
 // is not protected by a darc, but by a linkable ring signature.
 func (c ContractPopParty) VerifyInstruction(rst byzcoin.ReadOnlyStateTrie, inst byzcoin.Instruction, ctxHash []byte) error {
+	verify_ContractPopParty:= monitor.NewTimeMeasure("verify.ContractPopParty")
+	defer verify_ContractPopParty.Record()
+	execute_VerifyInstruction := monitor.NewTimeMeasure("execute.VerifyInstruction")
 	if inst.GetType() == byzcoin.InvokeType && inst.Invoke.Command == "mine" {
 		log.Lvl2("not verifying darc for mining")
 		return nil

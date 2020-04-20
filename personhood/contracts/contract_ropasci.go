@@ -70,6 +70,8 @@ type ContractRoPaSci struct {
 // VerifyInstruction overrides the definition in BasicContract and is used to allow the second player to
 // add a move without appearing in the darc.
 func (c *ContractRoPaSci) VerifyInstruction(rst byzcoin.ReadOnlyStateTrie, inst byzcoin.Instruction, ctxHash []byte) error {
+	verify_ContractRoPaSci:= monitor.NewTimeMeasure("verify.ContractRoPaSci")
+	defer verify_ContractRoPaSci.Record()
 	if c.FirstPlayer >= 0 {
 		return errors.New("this instance has already finished")
 	}

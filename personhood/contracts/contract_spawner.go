@@ -41,6 +41,8 @@ type ContractSpawner struct {
 
 // VerifyInstruction allows non-darc-verified calls for instructions that send coins.
 func (c ContractSpawner) VerifyInstruction(rst byzcoin.ReadOnlyStateTrie, inst byzcoin.Instruction, ctxHash []byte) error {
+	verify_ContractSpawner := monitor.NewTimeMeasure("verify.ContractSpawner")
+	defer verify_ContractSpawner.Record()
 	if inst.GetType() != byzcoin.SpawnType {
 		if err := inst.Verify(rst, ctxHash); err != nil {
 			return err

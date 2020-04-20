@@ -35,23 +35,6 @@ delays = list(set(df['delay']))
 keep = list(set(df['keep']))
 batch = list(set(df['batch']))
 
-def plot_columns(ax, columns):
-    for i in range(len(columns)):
-        column = columns[i]
-        d = data[column]
-        ax.bar(i, d, label=column[:-9])
-
-    ax.set_xlabel('transactions / batch size')
-    ax.legend(bbox_to_anchor=(0.1, 0.5), loc='center left',)
-
-# Monitoring tree
-# - send
-# - prepare
-#   - prepare_intro
-#   - create_tx
-#   - sign
-# - confirm
-
 for delay in delays:
     for k in keep:
         for b in batch:
@@ -64,34 +47,39 @@ for delay in delays:
             data = data.loc[data['batch'] == b]
             data = data.reset_index()
 
-            fig, axs = plt.subplots(2, 3)
-            fig.set_size_inches(16, 10)
+            fig, axs = plt.subplots(1, 4)
+            fig.set_size_inches(20, 5)
 
             fig.suptitle(titlestring)
 
-            #plot_columns(axs[0], ['send_user_sum',
-            #                      'prepare_user_sum',
-            #                      'confirm_user_sum'])
-            data.plot.bar(\
-                    x='hosts',\
-                    y= ['send_wall_sum',
-                                  'prepare_wall_sum',
-                                  'confirm_wall_sum'],\
-                    stacked=True, ax=axs[0][0])
+            # [[ax.set_ylim([0, 70]) for ax in a] for a in axs]
+            # [ax[0].set_ylabel('Time in seconds') for ax in axs]
+            [ax.set_ylim([0, 55]) for ax in axs]
+            axs[0].set_ylabel('Time in seconds')
 
-            axs[0][0].set_ylabel('Time in seconds')
-            
-            data.plot.bar(x='hosts', y=['prepare.prepare_intro_wall_sum',
-                                  'prepare.create_tx_wall_sum',
-                                  'prepare.sign_wall_sum'], stacked=True, ax=axs[0][1])
+            data.plot.bar(x='hosts', tick_label='overview', y= ['send_user_sum', 'prepare_user_sum', 'confirm_user_sum'], stacked=True, ax=axs[0])
+            axs[0].set_xlabel('overview')
+            plt.setp(axs[0].get_xticklabels(), visible=False)
 
-            data.plot.bar(x='hosts', y=['create_state_change_wall_sum'], stacked=True, ax=axs[0][2])
+            # data.plot.bar(x='hosts', y=['create_state_change_user_sum'], stacked=True, ax=axs[0][1])
 
-            data.plot.bar(x='hosts', y=['process_one_tx_wall_sum'], stacked=True, ax=axs[1][0])
+            # data.plot.bar(x='hosts', y=['process_one_tx_user_sum'], stacked=True, ax=axs[0][2])
 
-            data.plot.bar(x='hosts', y=['p_o_t.init_wall_sum', 'p_o_t.execute_wall_sum', 'p_o_t.increment_wall_sum', 'p_o_t.verify_wall_sum', 'p_o_t.store_wall_sum'], stacked=True, ax=axs[1][2])
+            data.plot.bar(x='hosts', y=['p_o_t.init_user_sum', 'p_o_t.execute_user_sum', 'p_o_t.increment_user_sum', 'p_o_t.verify_user_sum', 'p_o_t.store_user_sum'], stacked=True, ax=axs[1])
+            axs[1].set_xlabel('ProcessOneTx')
+            plt.setp(axs[1].get_xticklabels(), visible=False)
 
-            [[ax.set_ylim([0, 12]) for ax in a] for a in axs]
+            # 'execute.Recover_user_sum' should also be in there
+            data.plot.bar(x='hosts', y=['execute.newROSkipChain_user_sum', 'execute.GetValues_user_sum', 'execute.ContractConstructor_user_sum', 'execute.CreateContract_user_sum', 'execute.VerifyInstruction_user_sum', 'execute.Instruction_user_sum', 'execute.Trie_user_sum'], stacked=True, ax=axs[2])
+            axs[2].set_xlabel('ExecuteInstruction')
+            plt.setp(axs[2].get_xticklabels(), visible=False)
+
+            # 'verify.ContractWrite_user_sum', 'verify.ContractCredential_user_sum', 'verify.ContractSpawner_user_sum', 'verify.contractAdaptorNV_user_sum', 'verify.contractNaming_user_sum', 'verify.ContractPopParty_user_sum', 'verify.ContractRoPaSci_user_sum', 'verify.contractAttrValue_user_sum', 'verify.contractDeferred_user_sum'
+            # data.plot.bar(x='hosts', y=['verify.basicContract_user_sum', 'verify.contractConfig_user_sum'], stacked=True, ax=axs[1][2])
+
+            data.plot.bar(x='hosts', y=['v_w_o.signers_user_sum', 'v_w_o.counters_user_sum', 'v_w_o.config_user_sum', 'v_w_o.darc_user_sum', 'v_w_o.action_user_sum', 'v_w_o.signatures_user_sum', 'v_w_o.check_user_sum', 'v_w_o.eval_user_sum'], stacked=True, ax=axs[3])
+            axs[3].set_xlabel('VerifyWithOptions')
+            plt.setp(axs[3].get_xticklabels(), visible=False)
 
             plt.savefig(data_dir + namestring + '.png')
             plt.close()

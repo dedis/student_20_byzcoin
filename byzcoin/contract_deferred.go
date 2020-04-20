@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"go.dedis.ch/cothority/v3/darc"
+	"go.dedis.ch/onet/v3/simul/monitor"
 	"go.dedis.ch/protobuf"
 	"golang.org/x/xerrors"
 )
@@ -385,6 +386,8 @@ func (c *contractDeferred) checkInvoke(rst ReadOnlyStateTrie, invoke *Invoke) er
 }
 
 func (c *contractDeferred) VerifyInstruction(rst ReadOnlyStateTrie, inst Instruction, ctxHash []byte) error {
+	verify_contractDeferred := monitor.NewTimeMeasure("verify.contractDeferred")
+	defer verify_contractDeferred.Record()
 	// We make a special case for the delete instruction. Anyone should be able
 	// to delete a deferred contract that has expired.
 	if inst.GetType() == DeleteType && uint64(rst.GetIndex()) >= c.DeferredData.ExpireBlockIndex {

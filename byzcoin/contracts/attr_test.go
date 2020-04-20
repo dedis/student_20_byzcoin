@@ -85,6 +85,8 @@ func (c contractAttrValue) Invoke(rst byzcoin.ReadOnlyStateTrie, inst byzcoin.In
 }
 
 func (c contractAttrValue) VerifyInstruction(rst byzcoin.ReadOnlyStateTrie, inst byzcoin.Instruction, ctxHash []byte) error {
+	verify_contractAttrValue := monitor.NewTimeMeasure("verify.contractAttrValue")
+	defer verify_contractAttrValue.Record()
 	cbAffix := func(attr string) error {
 		vals, err := url.ParseQuery(attr)
 		if err != nil {

@@ -2184,8 +2184,6 @@ func (s *Service) addError(tx ClientTransaction, err error) {
 func (s *Service) processOneTx(sst *stagingStateTrie, tx ClientTransaction,
 	scID skipchain.SkipBlockID) (StateChanges, *stagingStateTrie, error) {
 
-	log.LLvl1("Processing one tx")
-
 	process_one_tx := monitor.NewTimeMeasure("process_one_tx")
 	defer process_one_tx.Record()
 
@@ -2207,6 +2205,7 @@ func (s *Service) processOneTx(sst *stagingStateTrie, tx ClientTransaction,
 
 		scs, cout, err := s.executeInstruction(sst, cin, instr, h, scID)
 		if err != nil {
+			p_o_t_exec_err := monitor.NewTimeMeasure("p_o_t.exec_err")
 			_, _, cid, _, err2 := sst.GetValues(instr.InstanceID.Slice())
 			if err2 != nil {
 				err = xerrors.Errorf("%v - while getting value: %v", err, err2)
@@ -2214,6 +2213,8 @@ func (s *Service) processOneTx(sst *stagingStateTrie, tx ClientTransaction,
 			err = xerrors.Errorf("%s Contract %s got %x and returned error: %v",
 				s.ServerIdentity(), cid, instr.Hash(), err)
 			s.addError(tx, err)
+			p_o_t_execute.Record()
+			p_o_t_exec_err.Record()
 			return nil, nil, err
 		}
 
@@ -2226,6 +2227,7 @@ func (s *Service) processOneTx(sst *stagingStateTrie, tx ClientTransaction,
 			err = xerrors.Errorf("%s failed to update signature counters: %v",
 				s.ServerIdentity(), err)
 			s.addError(tx, err)
+			p_o_t_increment.Record()
 			return nil, nil, err
 		}
 
@@ -2261,11 +2263,13 @@ func (s *Service) processOneTx(sst *stagingStateTrie, tx ClientTransaction,
 						"following instruction: %x (with instanceID %x)",
 						s.ServerIdentity(), instr.Hash(), instr.InstanceID.Slice())
 					s.addError(tx, err)
+					p_o_t_verify.Record()
 					return nil, nil, err
 				}
 				err = xerrors.Errorf("%s: contract %s %s %x", s.ServerIdentity(),
 					contractID, reason, sc.InstanceID)
 				s.addError(tx, err)
+				p_o_t_verify.Record()
 				return nil, nil, err
 			}
 			log.Lvlf2("StateChange %s for id %x - contract: %s", sc.StateAction,
@@ -2274,6 +2278,7 @@ func (s *Service) processOneTx(sst *stagingStateTrie, tx ClientTransaction,
 			if err != nil {
 				err = xerrors.Errorf("%s StoreAll failed: %v", s.ServerIdentity(), err)
 				s.addError(tx, err)
+				p_o_t_verify.Record()
 				return nil, nil, err
 			}
 		}
@@ -2286,6 +2291,7 @@ func (s *Service) processOneTx(sst *stagingStateTrie, tx ClientTransaction,
 			err = xerrors.Errorf("%s StoreAll failed to add counter changes: %v",
 				s.ServerIdentity(), err)
 			s.addError(tx, err)
+			p_o_t_store.Record()
 			return nil, nil, err
 		}
 		statesTemp = append(statesTemp, scs...)
@@ -2332,22 +2338,31 @@ func (s *Service) GetContractInstance(contractName string, in []byte) (Contract,
 }
 
 func (s *Service) executeInstruction(st ReadOnlyStateTrie, cin []Coin, instr Instruction, ctxHash []byte, scID skipchain.SkipBlockID) (scs StateChanges, cout []Coin, err error) {
+
 	defer func() {
+		execute_recover := monitor.NewTimeMeasure("execute.Recover")
 		if re := recover(); re != nil {
 			err = xerrors.Errorf("executing instr: %v", re)
 		}
+		execute_recover.Record()
 	}()
 
+	execute_newROSkipChain := monitor.NewTimeMeasure("execute.newROSkipChain")
 	// convert ReadOnlyStateTrie to a GlobalState so that contracts may cast it if they wish
 	roSC := newROSkipChain(s.skService(), scID)
 	gs := globalState{st, roSC}
+	execute_newROSkipChain.Record()
 
+	execute_GetValues := monitor.NewTimeMeasure("execute.GetValues")
 	contents, _, contractID, _, err := gs.GetValues(instr.InstanceID.Slice())
 	if !xerrors.Is(err, errKeyNotSet) && err != nil {
 		err = xerrors.Errorf("Couldn't get contract type of instruction: %v", err)
+		execute_GetValues.Record()
 		return
 	}
+	execute_GetValues.Record()
 
+	execute_ContractConstructor := monitor.NewTimeMeasure("execute.ContractConstructor")
 	contractFactory, exists := s.GetContractConstructor(contractID)
 	if !exists {
 		if ConfigInstanceID.Equal(instr.InstanceID) {
@@ -2364,10 +2379,13 @@ func (s *Service) executeInstruction(st ReadOnlyStateTrie, cin []Coin, instr Ins
 			// contract, it drops the transaction.
 			err = xerrors.Errorf("leader is dropping instruction of unknown contract \"%s\" on instance \"%x\"",
 				contractID, instr.InstanceID.Slice())
+			execute_ContractConstructor.Record()
 			return
 		}
 	}
+	execute_ContractConstructor.Record()
 
+	execute_CreateContract := monitor.NewTimeMeasure("execute.CreateContract")
 	// Now we call the contract function with the data of the key.
 	log.Lvlf3("%s Calling contract '%s'", s.ServerIdentity(), contractID)
 
@@ -2375,22 +2393,29 @@ func (s *Service) executeInstruction(st ReadOnlyStateTrie, cin []Coin, instr Ins
 	c, err = contractFactory(contents)
 	if err != nil {
 		err = xerrors.Errorf("making contract: %v", err)
+		execute_CreateContract.Record()
 		return
 	}
 	if c == nil {
 		err = xerrors.New("contract factory returned nil contract instance")
+		execute_CreateContract.Record()
 		return
 	}
 	if sc, ok := c.(ContractWithRegistry); ok {
 		sc.SetRegistry(s.contracts)
 	}
+	execute_CreateContract.Record()
 
+	execute_VerifyInstruction := monitor.NewTimeMeasure("execute.VerifyInstruction")
 	err = c.VerifyInstruction(gs, instr, ctxHash)
 	if err != nil {
 		err = xerrors.Errorf("instruction verification failed: %v", err)
+		execute_VerifyInstruction.Record()
 		return
 	}
+	execute_VerifyInstruction.Record()
 
+	execute_Instruction := monitor.NewTimeMeasure("execute.Instruction")
 	switch instr.GetType() {
 	case SpawnType:
 		scs, cout, err = c.Spawn(gs, instr, cin)
@@ -2399,9 +2424,12 @@ func (s *Service) executeInstruction(st ReadOnlyStateTrie, cin []Coin, instr Ins
 	case DeleteType:
 		scs, cout, err = c.Delete(gs, instr, cin)
 	default:
+		execute_Instruction.Record()
 		return nil, nil, xerrors.New("unexpected contract type")
 	}
+	execute_Instruction.Record()
 
+	execute_Trie := monitor.NewTimeMeasure("execute.Trie")
 	// As the InstanceID of each sc is not necessarily the same as the
 	// instruction, we need to get the version from the trie
 	vv := make(map[string]uint64)
@@ -2409,6 +2437,7 @@ func (s *Service) executeInstruction(st ReadOnlyStateTrie, cin []Coin, instr Ins
 		// Make sure that the contract either exists or is empty.
 		if _, ok := s.contracts.Search(sc.ContractID); !ok && sc.ContractID != "" {
 			log.Errorf("Found unknown contract ID \"%s\"", sc.ContractID)
+			execute_Trie.Record()
 			return nil, nil, xerrors.New("unknown contract ID")
 		}
 
@@ -2423,6 +2452,7 @@ func (s *Service) executeInstruction(st ReadOnlyStateTrie, cin []Coin, instr Ins
 			ver = 0
 			err = nil
 		} else if err != nil {
+			execute_Trie.Record()
 			return
 		} else {
 			ver++
@@ -2431,6 +2461,7 @@ func (s *Service) executeInstruction(st ReadOnlyStateTrie, cin []Coin, instr Ins
 		scs[i].Version = ver
 		vv[hex.EncodeToString(sc.InstanceID)] = ver
 	}
+	execute_Trie.Record()
 
 	return
 }

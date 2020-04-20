@@ -350,43 +350,61 @@ func (instr Instruction) Verify(st ReadOnlyStateTrie, msg []byte) error {
 // the counters should be checked. This is used with the "defered" contract
 // where the clients sign the root instruction without the counters.
 func (instr Instruction) VerifyWithOption(st ReadOnlyStateTrie, msg []byte, ops *VerificationOptions) error {
+	// Next Step : Dig here !
+	monitor_signers := monitor.NewTimeMeasure("v_w_o.signers")
 	if ops == nil {
 		ops = &VerificationOptions{}
 	}
 
 	// check the number of signers match with the number of signatures
 	if len(instr.SignerIdentities) != len(instr.Signatures) {
+		monitor_signers.Record()
 		return xerrors.New("length of identities does not match the length of" +
 			" signatures")
 	}
+	monitor_signers.Record()
 
+	monitor_counters := monitor.NewTimeMeasure("v_w_o.counters")
 	// check the signature counters
 	if !ops.IgnoreCounters {
 		if err := verifySignerCounters(st, instr.SignerCounter, instr.SignerIdentities); err != nil {
+			monitor_counters.Record()
 			return xerrors.Errorf("signer counter: %v", err)
 		}
 	}
+	monitor_counters.Record()
 
+	monitor_config := monitor.NewTimeMeasure("v_w_o.config")
 	// get the valid DARC contract IDs from the configuration
 	config, err := LoadConfigFromTrie(st)
 	if err != nil {
+		monitor_config.Record()
 		return xerrors.Errorf("reading trie: %v", err)
 	}
+	monitor_config.Record()
 
+	monitor_darc := monitor.NewTimeMeasure("v_w_o.darc")
 	// get the darc
 	d, err := getInstanceDarc(st, instr.InstanceID, config.DarcContractIDs)
 	if err != nil {
+		monitor_darc.Record()
 		return xerrors.Errorf("darc not found: %v", err)
 	}
 	if len(instr.Signatures) == 0 {
+		monitor_darc.Record()
 		return xerrors.New("no signatures - nothing to verify")
 	}
+	monitor_darc.Record()
 
+	monitor_action := monitor.NewTimeMeasure("v_w_o.action")
 	// check the action
 	if !d.Rules.Contains(darc.Action(instr.Action())) {
+		monitor_action.Record()
 		return xerrors.Errorf("action '%v' does not exist", instr.Action())
 	}
+	monitor_action.Record()
 
+	monitor_signatures := monitor.NewTimeMeasure("v_w_o.signatures")
 	// check the signature
 	// Save the identities that provide good signatures
 	identitiesWithCorrectSignatures := make([]string, 0)
@@ -400,23 +418,31 @@ func (instr Instruction) VerifyWithOption(st ReadOnlyStateTrie, msg []byte, ops 
 		log.Warn("Found invalid signatures - please make sure you're using" +
 			" byzcoin.NewClientTransaction before signing it!")
 	}
+	monitor_signatures.Record()
 
+	monitor_check := monitor.NewTimeMeasure("v_w_o.check")
 	// check the expression
 	getDarc := func(str string, latest bool) *darc.Darc {
 		if len(str) < 5 || string(str[0:5]) != "darc:" {
+			monitor_check.Record()
 			return nil
 		}
 		darcID, err := hex.DecodeString(str[5:])
 		if err != nil {
+			monitor_check.Record()
 			return nil
 		}
 		d, err := LoadDarcFromTrie(st, darcID)
 		if err != nil {
+			monitor_check.Record()
 			return nil
 		}
 		return d
 	}
+	monitor_check.Record()
 
+	monitor_eval := monitor.NewTimeMeasure("v_w_o.eval")
+	defer monitor_eval.Record()
 	if ops.EvalAttr != nil {
 		err := darc.EvalExprAttr(d.Rules.Get(darc.Action(instr.Action())), getDarc, ops.EvalAttr, identitiesWithCorrectSignatures...)
 		return cothority.ErrorOrNil(err, "evaluating darc")

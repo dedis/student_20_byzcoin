@@ -9,6 +9,7 @@ import (
 	"go.dedis.ch/cothority/v3"
 	"go.dedis.ch/cothority/v3/darc"
 	"go.dedis.ch/onet/v3/network"
+	"go.dedis.ch/onet/v3/simul/monitor"
 	"go.dedis.ch/protobuf"
 	"golang.org/x/xerrors"
 )
@@ -66,6 +67,8 @@ func contractNamingFromBytes(in []byte) (Contract, error) {
 }
 
 func (c *contractNaming) VerifyInstruction(rst ReadOnlyStateTrie, inst Instruction, msg []byte) error {
+	verify_contractNaming := monitor.NewTimeMeasure("verify.contractNaming")
+	defer verify_contractNaming.Record()
 	pr, err := rst.GetProof(NamingInstanceID.Slice())
 	if err != nil {
 		return xerrors.Errorf("failed to get proof of NamingInstanceID: %v", err)

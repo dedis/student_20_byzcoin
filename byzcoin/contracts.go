@@ -17,6 +17,7 @@ import (
 	"go.dedis.ch/cothority/v3/skipchain"
 	"go.dedis.ch/onet/v3"
 	"go.dedis.ch/onet/v3/network"
+	"go.dedis.ch/onet/v3/simul/monitor"
 	"go.dedis.ch/protobuf"
 	"golang.org/x/xerrors"
 )
@@ -201,6 +202,8 @@ func notImpl(what string) error {
 // VerifyInstruction offers the default implementation of verifying an instruction. Types
 // which embed BasicContract may choose to override this implementation.
 func (b BasicContract) VerifyInstruction(rst ReadOnlyStateTrie, inst Instruction, ctxHash []byte) error {
+	verify_basicContract := monitor.NewTimeMeasure("verify.basicContract")
+	defer verify_basicContract.Record()
 	return inst.VerifyWithOption(rst, ctxHash, &VerificationOptions{EvalAttr: b.MakeAttrInterpreters(rst, inst)})
 }
 
@@ -215,6 +218,8 @@ func (b BasicContract) VerifyDeferredInstruction(rst ReadOnlyStateTrie, inst Ins
 // whether the transaction is sent after a certain block index and before
 // another block index.
 func (b BasicContract) MakeAttrInterpreters(rst ReadOnlyStateTrie, inst Instruction) darc.AttrInterpreters {
+	monitor_makeAttrInterpreters := monitor.NewTimeMeasure("MakeAttrInterpreters")
+	defer monitor_makeAttrInterpreters.Record()
 	cb := func(attr string) error {
 		vals, err := url.ParseQuery(attr)
 		if err != nil {
@@ -311,6 +316,8 @@ type darcContractIDs struct {
 
 // We need to override BasicContract.Verify because of the genesis config special case.
 func (c *contractConfig) VerifyInstruction(rst ReadOnlyStateTrie, inst Instruction, msg []byte) error {
+	verify_contractConfig := monitor.NewTimeMeasure("verify.contractConfig")
+	defer verify_contractConfig.Record()
 	pr, err := rst.GetProof(ConfigInstanceID.Slice())
 	if err != nil {
 		return xerrors.Errorf("reading trie: %v", err)

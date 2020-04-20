@@ -215,6 +215,8 @@ func intersectRosters(r1, r2 *onet.Roster) int {
 // is a read spawn. This will check if any makeAttInterpreter has been
 // registered in the service and apply them.
 func (c ContractWrite) VerifyInstruction(rst byzcoin.ReadOnlyStateTrie, inst byzcoin.Instruction, ctxHash []byte) error {
+	verify_ContractWrite := monitor.NewTimeMeasure("verify.ContractWrite")
+	defer verify_ContractWrite.Record()
 	if inst.GetType() == byzcoin.SpawnType && inst.Spawn.ContractID == ContractReadID {
 
 		evalAttr := darc.AttrInterpreters{}

@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
+	"go.dedis.ch/onet/v3/simul/monitor"
 	"strings"
 	"sync"
 	"testing"
@@ -2809,6 +2810,8 @@ type contractAdaptorNV struct {
 }
 
 func (ca *contractAdaptorNV) VerifyInstruction(cdb ReadOnlyStateTrie, inst Instruction, msg []byte) error {
+	verify_contractAdaptorNV := monitor.NewTimeMeasure("verify.contractAdaptorNV")
+	defer verify_contractAdaptorNV.Record()
 	// Always verifies the instruction as "ok".
 	return nil
 }
