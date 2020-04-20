@@ -433,6 +433,7 @@ func (p *txPipeline) processTxs(initialState *txProcessorState) {
 				}
 
 				currentVersion = version
+			//TODO : change this name to create block signal
 			case <-intervalChan:
 				// update the interval every time because it might've changed
 				intervalChan = getInterval()
@@ -449,9 +450,6 @@ func (p *txPipeline) processTxs(initialState *txProcessorState) {
 						break
 					}
 				}
-
-
-
 
 				// wait for the next interval if there are no changes
 				// we do not check for the length because currentState
@@ -488,7 +486,6 @@ func (p *txPipeline) processTxs(initialState *txProcessorState) {
 				}(inState)
 
 			case tx, ok := <-p.ctxChan:
-				log.Print("received new tx from service", len(tx.Instructions))
 				select {
 				// This case has a higher priority so we force the select to go through it
 				// first.
@@ -502,6 +499,7 @@ func (p *txPipeline) processTxs(initialState *txProcessorState) {
 					log.Lvl3("stopping txs processor")
 					return
 				}
+				log.Print("received new tx from service", len(tx.Instructions), ok)
 
 				txh := tx.Instructions.HashWithSignatures()
 				for _, txHash := range txHashes {
