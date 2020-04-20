@@ -337,9 +337,9 @@ func (p *txPipeline) start(initialState *txProcessorState, stopSignal chan bool)
 	//TODO : Should we replace the collectTx method?
 	//p.collectTx()
 	p.processTxs(initialState)
-
 	<-stopSignal
-	close(p.stopCollect)
+
+	close(p.ctxChan)
 	p.processor.Stop()
 	p.wg.Wait()
 }
@@ -399,7 +399,9 @@ func (p *txPipeline) processTxs(initialState *txProcessorState) {
 		return time.After(interval)
 	}
 	go func() {
+		log.Print("wg 1")
 		p.wg.Add(1)
+		defer log.Print("wg 1 done")
 		defer p.wg.Done()
 		intervalChan := getInterval()
 		var txHashes [][]byte
@@ -407,6 +409,7 @@ func (p *txPipeline) processTxs(initialState *txProcessorState) {
 		for {
 			select {
 			case version := <-p.needUpgrade:
+				log.Print("need upgrade")
 				if version <= currentVersion {
 					// Prevent multiple upgrade blocks for the same version.
 					break
@@ -447,22 +450,28 @@ func (p *txPipeline) processTxs(initialState *txProcessorState) {
 					}
 				}
 
+
+
+
 				// wait for the next interval if there are no changes
 				// we do not check for the length because currentState
 				// should always be non-empty, otherwise it's a
 				// programmer error
 				if len(currentState[0].txs) == 0 {
+					log.Print("breaks here", len(currentState[0].txs), "transactions")
 					break
 				}
+
 
 				proposing = true
 
 				// find the right state and propose it in the block
 				var inState *txProcessorState
 				currentState, inState = proposeInputState(currentState)
-
 				go func(state *txProcessorState) {
+					//log.Print("wg 2")
 					p.wg.Add(1)
+					//defer log.Print("wg 2 done")
 					defer p.wg.Done()
 					if state != nil {
 						// NOTE: ProposeBlock might block for a long time,
@@ -477,7 +486,9 @@ func (p *txPipeline) processTxs(initialState *txProcessorState) {
 					}
 					proposalResult <- nil
 				}(inState)
+
 			case tx, ok := <-p.ctxChan:
+				log.Print("received new tx from service", len(tx.Instructions))
 				select {
 				// This case has a higher priority so we force the select to go through it
 				// first.
@@ -491,6 +502,7 @@ func (p *txPipeline) processTxs(initialState *txProcessorState) {
 					log.Lvl3("stopping txs processor")
 					return
 				}
+
 				txh := tx.Instructions.HashWithSignatures()
 				for _, txHash := range txHashes {
 					if bytes.Compare(txHash, txh) == 0 {
@@ -513,6 +525,7 @@ func (p *txPipeline) processTxs(initialState *txProcessorState) {
 					// it might be getting updated and then append newStates.
 					currentState = append(currentState[:len(currentState)-1], newStates...)
 				}
+
 			}
 		}
 	}()

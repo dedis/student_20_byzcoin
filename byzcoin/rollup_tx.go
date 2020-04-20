@@ -9,7 +9,7 @@ import (
 )
 
 func init() {
-	network.RegisterMessages(RollupTxResponse{})
+	network.RegisterMessages(RollupTxResponse{}, &AddTxRequest{})
 	_, err := onet.GlobalProtocolRegister(rollupTxProtocol, NewRollupTxProtocol)
 	log.ErrFatal(err)
 }
@@ -41,7 +41,7 @@ type RollupTxProtocol struct {
 
 type structAddTxRequest struct {
 	*onet.TreeNode
-	*AddTxRequest
+	AddTxRequest
 }
 
 // CollectTxRequest is the request message that asks the receiver to send their
@@ -120,8 +120,8 @@ func (p *RollupTxProtocol) Dispatch() error {
 	defer p.Done()
 	//TODO : should we close this channel?
 	//defer close(p.CtxChan)
-
 	p.CtxChan <- (<-p.addRequestChan).Transaction
+	log.Print("Sent transaction to the pipeline, through follower", p.ServerIdentity())
 
 	// wait for the results to come back and write to the channel
 	//defer close(p.TxsChan)
