@@ -97,6 +97,7 @@ func NewRollupTxProtocol(node *onet.TreeNodeInstance) (onet.ProtocolInstance, er
 
 // Start starts the protocol, it should only be called on the root node.
 func (p *RollupTxProtocol) Start() error {
+	defer p.Done()
 	if !p.IsRoot() {
 		return xerrors.New("only the root should call start")
 	}
@@ -118,6 +119,9 @@ func (p *RollupTxProtocol) Start() error {
 // Dispatch runs the protocol.
 func (p *RollupTxProtocol) Dispatch() error {
 	defer p.Done()
+	if p.IsRoot() {
+		return nil
+	}
 	//TODO : should we close this channel?
 	//defer close(p.CtxChan)
 	p.CtxChan <- (<-p.addRequestChan).Transaction

@@ -499,19 +499,16 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 			return nil, xerrors.Errorf("couldn't get block info: %v", err)
 		}
 
-
-
 		ctxHash := req.Transaction.Instructions.Hash()
 		ch := s.notifications.registerForBlocks()
 		defer s.notifications.unregisterForBlocks(ch)
 
 
-
+		//TODO : create new block if txBuffer is not empty directly after creating another one
 		s.txBuffer.add(string(req.SkipchainID), req.Transaction)
-
 		if !s.ServerIdentity().Equal(leader) {
 			scID := req.SkipchainID
-			pipeline := txPipeline{
+			pipeline := txPipeline {
 				processor: &defaultTxProcessor{
 					stopCollect: make(chan bool),
 					latest:      latest,
@@ -519,10 +516,10 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 					Service:     s,
 				},
 			}
-
 			//Registering a new pipeline into the service
 			s.txPipeline = &pipeline
 		}
+
 		/*
 		res, err := s.txPipeline.processor.RollupTx()
 		if err != nil {
