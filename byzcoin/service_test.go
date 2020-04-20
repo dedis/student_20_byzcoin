@@ -45,7 +45,7 @@ const stateChangeCacheContract = "stateChangeCacheTest"
 
 func TestMain(m *testing.M) {
 	log.SetShowTime(true)
-	log.MainTest(m)
+	log.MainTest(m, 1)
 }
 
 func TestService_GetAllByzCoinIDs(t *testing.T) {
@@ -194,6 +194,8 @@ func testAddTransaction(t *testing.T, blockInterval time.Duration, sendToIdx int
 	})
 	require.Error(t, err)
 
+
+
 	if failure {
 		// kill a child conode and adding tx should still succeed
 		log.Lvl1("Pausing (killing) conode", s.hosts[len(s.hosts)-1].Address())
@@ -204,6 +206,7 @@ func testAddTransaction(t *testing.T, blockInterval time.Duration, sendToIdx int
 	// the operations below should succeed
 	// add the first tx
 	log.Lvl1("adding the first tx")
+	log.Print("adding the first tx")
 	tx1, err := createOneClientTxWithCounter(s.darc.GetBaseID(), dummyContract, s.value, s.signer, 1)
 	require.NoError(t, err)
 	akvresp, err := s.service().AddTransaction(&AddTxRequest{
@@ -219,6 +222,7 @@ func testAddTransaction(t *testing.T, blockInterval time.Duration, sendToIdx int
 
 	// add the second tx
 	log.Lvl1("adding the second tx")
+	log.Print("adding the second tx")
 	value2 := []byte("value2")
 	tx2, err := createOneClientTxWithCounter(s.darc.GetBaseID(), dummyContract, value2, s.signer, 2)
 	require.NoError(t, err)
@@ -278,6 +282,7 @@ func testAddTransaction(t *testing.T, blockInterval time.Duration, sendToIdx int
 		// Try to add a new transaction to the node that failed (but is
 		// now running) and it should work.
 		log.Lvl1("making a last transaction")
+		log.Print("making a last transaction")
 		pr, k, resp, err, err2 := sendTransaction(t, s, len(s.hosts)-1, dummyContract, 10)
 		transactionOK(t, resp, err)
 		require.NoError(t, err2)

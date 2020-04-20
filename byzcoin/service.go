@@ -132,11 +132,9 @@ type Service struct {
 	// restarting after shutdown, answer getTxs requests and so on.
 	txBuffer txBuffer
 
-	//TODO : add txPipeline
-	//Create diagram between service, tx pipeline and tx rollup
+
 	txPipeline *txPipeline
-	//TODO : remove this
-	testCtx ClientTransaction
+
 
 	heartbeats             heartbeats
 	heartbeatsTimeout      chan string
@@ -440,10 +438,12 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 	if err != nil {
 		log.LLvl1("Error getting the leader", err)
 	}
-	log.LLvl1("leader:", leader, "current", s.ServerIdentity())
+
+	//log.Print("new transaction to be added. Leader : ", leader, " current ", s.ServerIdentity())
 
 	//check if leader if leader, write ctx to ctxChan
 	if s.ServerIdentity().Equal(leader) {
+		log.Print("leader sent new tx to the pipeline", leader, "len instructions", len(req.Transaction.Instructions))
 		s.txPipeline.ctxChan <- req.Transaction
 	} else {
 		// if not leader start protocol, create new tree point to point with leader
@@ -479,6 +479,7 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 		if err != nil {
 			log.LLvl1("Error starting the protocol", err)
 		}
+		log.Print("follower started protocol", s.ServerIdentity())
 	}
 
 	// Note to my future self: s.txBuffer.add used to be out here. It used to work
@@ -498,9 +499,15 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 			return nil, xerrors.Errorf("couldn't get block info: %v", err)
 		}
 
+
+
 		ctxHash := req.Transaction.Instructions.Hash()
 		ch := s.notifications.registerForBlocks()
 		defer s.notifications.unregisterForBlocks(ch)
+
+
+
+		s.txBuffer.add(string(req.SkipchainID), req.Transaction)
 
 		if !s.ServerIdentity().Equal(leader) {
 			scID := req.SkipchainID
@@ -515,33 +522,27 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 
 			//Registering a new pipeline into the service
 			s.txPipeline = &pipeline
-
 		}
-
+		/*
 		res, err := s.txPipeline.processor.RollupTx()
 		if err != nil {
 			log.Error("failed to collect transactions", err)
 		}
-		log.LLvl1("got", len(res.Txs), "transactions")
-
-
+		//log.LLvl1("got", len(res.Txs), "transactions")
+		for _, tx := range res.Txs {
+			select {
+			//TODO B : use this channel in leader
+			case s.txPipeline.ctxChan <- tx:
+				log.Print("Hello")
+				// channel not full, do nothing
+			default:
+				log.Warn("dropping transactions because there are too many")
+			}
+		}
+		*/
 		/*
 		s.txPipeline.ctxChan <- req.Transaction
-
-		/*
-			/*
-			for _, tx := range res.Txs {
-				select {
-				//TODO B : use this channel in leader
-				case s.txPipeline.ctxChan <- tx:
-					log.LLvl1("Hello")
-					// channel not full, do nothing
-				default:
-					log.Warn("dropping transactions because there are too many")
-				}
-			}
 		*/
-
 		//s.txBuffer.add(string(req.SkipchainID), req.Transaction)
 
 		// In case we don't have any blocks, because there are no transactions,
@@ -572,7 +573,6 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 		//} else {
 		//	s.txBuffer.add(string(req.SkipchainID), req.Transaction)
 	}
-	//addtx.Record()
 	return &AddTxResponse{Version: CurrentVersion}, nil
 }
 
@@ -2063,6 +2063,7 @@ func (s *Service) startPolling(scID skipchain.SkipBlockID) chan bool {
 		s.working.Add(1)
 		defer s.working.Done()
 		s.closedMutex.Unlock()
+		log.Print("started pipeline", s.ServerIdentity())
 		pipeline.start(&initialState, stopChan)
 	}()
 	return stopChan
