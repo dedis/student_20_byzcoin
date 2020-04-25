@@ -194,8 +194,6 @@ func testAddTransaction(t *testing.T, blockInterval time.Duration, sendToIdx int
 	})
 	require.Error(t, err)
 
-
-
 	if failure {
 		// kill a child conode and adding tx should still succeed
 		log.Lvl1("Pausing (killing) conode", s.hosts[len(s.hosts)-1].Address())
