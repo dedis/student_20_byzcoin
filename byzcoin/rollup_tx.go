@@ -71,9 +71,9 @@ type structRollupTxResponse struct {
 }
 */
 
-// TODO modify signature here to add ctx chan instead
 // NewRollupTxProtocol is used for registering the protocol.
 // was in the signature before :
+// TODO modify signature here to add ctx chan instead
 func NewRollupTxProtocol(node *onet.TreeNodeInstance) (onet.ProtocolInstance, error) {
 	c := &RollupTxProtocol{
 		TreeNodeInstance: node,
