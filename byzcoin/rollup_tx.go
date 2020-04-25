@@ -19,7 +19,7 @@ type getTxsCallback func(*network.ServerIdentity, *onet.Roster, skipchain.SkipBl
 const rollupTxProtocol = "RollupTxProtocol"
 const defaultMaxNumTxs = 100
 
-// CollectTxProtocol is a protocol for collecting pending transactions.
+// RollupTxProtocol is a protocol for collecting pending transactions.
 // Add channel here
 type RollupTxProtocol struct {
 	*onet.TreeNodeInstance
@@ -43,7 +43,7 @@ type structAddTxRequest struct {
 	AddTxRequest
 }
 
-// CollectTxRequest is the request message that asks the receiver to send their
+// RollupTxRequest is the request message that asks the receiver to send their
 // pending transactions back to the leader.
 type RollupTxRequest struct {
 	SkipchainID skipchain.SkipBlockID
@@ -52,7 +52,7 @@ type RollupTxRequest struct {
 	Version     int
 }
 
-// CollectTxResponse is the response message that contains all the pending
+// RollupTxResponse is the response message that contains all the pending
 // transactions on the node.
 type RollupTxResponse struct {
 	Txs            []ClientTransaction
@@ -72,7 +72,7 @@ type structRollupTxResponse struct {
 */
 
 // TODO modify signature here to add ctx chan instead
-// NewCollectTxProtocol is used for registering the protocol.
+// NewRollupTxProtocol is used for registering the protocol.
 // was in the signature before :
 func NewRollupTxProtocol(node *onet.TreeNodeInstance) (onet.ProtocolInstance, error) {
 	c := &RollupTxProtocol{
