@@ -81,5 +81,9 @@ for delay in delays:
             axs[3].set_xlabel('VerifyWithOptions')
             plt.setp(axs[3].get_xticklabels(), visible=False)
 
+            for ax in axs:
+                handles, labels = ax.get_legend_handles_labels()
+                ax.legend(handles[::-1], labels[::-1])
+
             plt.savefig(data_dir + namestring + '.png')
             plt.close()
