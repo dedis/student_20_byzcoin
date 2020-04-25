@@ -19,7 +19,6 @@ type getTxsCallback func(*network.ServerIdentity, *onet.Roster, skipchain.SkipBl
 const rollupTxProtocol = "RollupTxProtocol"
 const defaultMaxNumTxs = 100
 
-
 // CollectTxProtocol is a protocol for collecting pending transactions.
 // Add channel here
 type RollupTxProtocol struct {
@@ -59,7 +58,6 @@ type RollupTxResponse struct {
 	Txs            []ClientTransaction
 	ByzcoinVersion Version
 }
-
 
 /*
 type structRollupTxRequest struct {

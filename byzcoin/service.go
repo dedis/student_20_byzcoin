@@ -132,9 +132,7 @@ type Service struct {
 	// restarting after shutdown, answer getTxs requests and so on.
 	txBuffer txBuffer
 
-
 	txPipeline *txPipeline
-
 
 	heartbeats             heartbeats
 	heartbeatsTimeout      chan string
@@ -503,12 +501,11 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 		ch := s.notifications.registerForBlocks()
 		defer s.notifications.unregisterForBlocks(ch)
 
-
 		//TODO : create new block if txBuffer is not empty directly after creating another one
 		s.txBuffer.add(string(req.SkipchainID), req.Transaction)
 		if !s.ServerIdentity().Equal(leader) {
 			scID := req.SkipchainID
-			pipeline := txPipeline {
+			pipeline := txPipeline{
 				processor: &defaultTxProcessor{
 					stopCollect: make(chan bool),
 					latest:      latest,
@@ -521,24 +518,24 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 		}
 
 		/*
-		res, err := s.txPipeline.processor.RollupTx()
-		if err != nil {
-			log.Error("failed to collect transactions", err)
-		}
-		//log.LLvl1("got", len(res.Txs), "transactions")
-		for _, tx := range res.Txs {
-			select {
-			//TODO B : use this channel in leader
-			case s.txPipeline.ctxChan <- tx:
-				log.Print("Hello")
-				// channel not full, do nothing
-			default:
-				log.Warn("dropping transactions because there are too many")
+			res, err := s.txPipeline.processor.RollupTx()
+			if err != nil {
+				log.Error("failed to collect transactions", err)
 			}
-		}
+			//log.LLvl1("got", len(res.Txs), "transactions")
+			for _, tx := range res.Txs {
+				select {
+				//TODO B : use this channel in leader
+				case s.txPipeline.ctxChan <- tx:
+					log.Print("Hello")
+					// channel not full, do nothing
+				default:
+					log.Warn("dropping transactions because there are too many")
+				}
+			}
 		*/
 		/*
-		s.txPipeline.ctxChan <- req.Transaction
+			s.txPipeline.ctxChan <- req.Transaction
 		*/
 		//s.txBuffer.add(string(req.SkipchainID), req.Transaction)
 
@@ -1099,8 +1096,8 @@ func (s *Service) NewProtocol(ti *onet.TreeNodeInstance, conf *onet.GenericConfi
 		}
 
 		rtx := pi.(*RollupTxProtocol)
-	//	log.Print("server id", s.ServerIdentity())
-	//	log.Print("ctx chan", s.txPipeline.ctxChan)
+		//	log.Print("server id", s.ServerIdentity())
+		//	log.Print("ctx chan", s.txPipeline.ctxChan)
 		rtx.CtxChan = s.txPipeline.ctxChan
 	}
 	return

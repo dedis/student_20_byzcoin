@@ -129,7 +129,6 @@ func (s *defaultTxProcessor) RollupTx() (*rollupTxResult, error) {
 	s.latest = latest
 	s.Unlock()
 
-
 	log.Lvlf3("%s: Starting new block %d (%x) for chain %x", s.ServerIdentity(), latest.Index+1, latest.Hash, s.scID)
 	tree := bcConfig.Roster.GenerateNaryTree(len(bcConfig.Roster.List))
 	proto, err := s.CreateProtocol(rollupTxProtocol, tree)
@@ -155,19 +154,15 @@ func (s *defaultTxProcessor) RollupTx() (*rollupTxResult, error) {
 	}
 	*/
 
-
-
 	/*
-	if err := root.Start(); err != nil {
-		log.Error(s.ServerIdentity(), "Failed to start the protocol with error."+
-			" Start() only returns an error when the protocol is not initialised correctly,"+
-			" e.g., not all the required fields are set."+
-			" If you see this message then there may be a programmer error.", err)
-		return nil, xerrors.Errorf("starting protocol: %v", err)
-	}
+		if err := root.Start(); err != nil {
+			log.Error(s.ServerIdentity(), "Failed to start the protocol with error."+
+				" Start() only returns an error when the protocol is not initialised correctly,"+
+				" e.g., not all the required fields are set."+
+				" If you see this message then there may be a programmer error.", err)
+			return nil, xerrors.Errorf("starting protocol: %v", err)
+		}
 	*/
-
-
 
 	// When we poll, the child nodes must reply within half of the block
 	// interval, because we'll use the other half to process the
@@ -189,18 +184,18 @@ rollupTxLoop:
 			txs = append(txs, newTxs)
 			break rollupTxLoop
 			/*
-			if more {
-				for _, ct := range newTxs {
-					txsz := txSize(TxResult{ClientTransaction: ct})
-					if txsz < bcConfig.MaxBlockSize {
-						txs = append(txs, ct)
-					} else {
-						log.Lvl2(s.ServerIdentity(), "dropping collected transaction with length", txsz)
+				if more {
+					for _, ct := range newTxs {
+						txsz := txSize(TxResult{ClientTransaction: ct})
+						if txsz < bcConfig.MaxBlockSize {
+							txs = append(txs, ct)
+						} else {
+							log.Lvl2(s.ServerIdentity(), "dropping collected transaction with length", txsz)
+						}
 					}
-				}
-			} else {
+				} else {
 
-			}*/
+				}*/
 		case <-protocolTimeout:
 			log.Lvl2(s.ServerIdentity(), "timeout while collecting transactions from other nodes")
 			close(root.Finish)
@@ -352,7 +347,6 @@ func (p *txPipeline) start(initialState *txProcessorState, stopSignal chan bool)
 	p.wg.Wait()
 }
 
-
 /*
 //TODO : we won't need this function anymore
 func (p *txPipeline) collectTx() {
@@ -467,7 +461,6 @@ func (p *txPipeline) processTxs(initialState *txProcessorState) {
 					log.Print("breaks here", len(currentState[0].txs), "transactions")
 					break
 				}
-
 
 				proposing = true
 
