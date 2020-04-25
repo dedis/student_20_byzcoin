@@ -1149,7 +1149,7 @@ func TestService_StateChange(t *testing.T) {
 			}
 			binary.PutVarint(zeroBuf, 0)
 			return []StateChange{
-				StateChange{
+				{
 					StateAction: Create,
 					InstanceID:  inst.DeriveID("add").Slice(),
 					ContractID:  cid,
@@ -1168,7 +1168,7 @@ func TestService_StateChange(t *testing.T) {
 			vBuf := make([]byte, 8)
 			binary.PutVarint(vBuf, v)
 			return []StateChange{
-				StateChange{
+				{
 					StateAction: Update,
 					InstanceID:  inst.InstanceID.Slice(),
 					ContractID:  cid,
@@ -1251,19 +1251,19 @@ func TestService_StateChangeVerification(t *testing.T) {
 		}
 
 		return []StateChange{
-			StateChange{
+			{
 				StateAction: Create,
 				InstanceID:  inst.DeriveID("").Slice(),
 				ContractID:  cid,
 				Value:       zeroBuf,
 			},
-			StateChange{
+			{
 				StateAction: Update,
 				InstanceID:  inst.DeriveID("").Slice(),
 				ContractID:  cid,
 				Value:       zeroBuf,
 			},
-			StateChange{
+			{
 				StateAction: sa,
 				InstanceID:  iid2.Slice(),
 				ContractID:  cid,
@@ -1357,7 +1357,7 @@ func TestService_DarcEvolutionFail(t *testing.T) {
 			// Because field ContractID is missing, this Invoke should fail.
 			Command: cmdDarcEvolve,
 			Args: []Argument{
-				Argument{
+				{
 					Name:  "darc",
 					Value: d2Buf,
 				},
@@ -2571,7 +2571,7 @@ func darcToTx(t *testing.T, d2 darc.Darc, signer darc.Signer, ctr uint64) Client
 		ContractID: ContractDarcID,
 		Command:    cmdDarcEvolve,
 		Args: []Argument{
-			Argument{
+			{
 				Name:  "darc",
 				Value: d2Buf,
 			},
