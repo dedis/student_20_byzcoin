@@ -45,7 +45,7 @@ jobs:
 
     - stage: test
       <<: *language_go_1_13
-      script: GO111MODULE=on go test -short -v -run byzcoin
+      script: GO111MODULE=on go test -short -v ./byzcoin
 
 notifications:
   email: false
