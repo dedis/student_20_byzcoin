@@ -393,9 +393,7 @@ func (p *txPipeline) processTxs(initialState *txProcessorState) {
 		return time.After(interval)
 	}
 	go func() {
-		log.Print("wg 1")
 		p.wg.Add(1)
-		defer log.Print("wg 1 done")
 		defer p.wg.Done()
 		intervalChan := getInterval()
 		var txHashes [][]byte
@@ -460,9 +458,7 @@ func (p *txPipeline) processTxs(initialState *txProcessorState) {
 				var inState *txProcessorState
 				currentState, inState = proposeInputState(currentState)
 				go func(state *txProcessorState) {
-					log.Print("wg 2")
 					p.wg.Add(1)
-					defer log.Print("wg 2 done")
 					defer p.wg.Done()
 					if state != nil {
 						// NOTE: ProposeBlock might block for a long time,
