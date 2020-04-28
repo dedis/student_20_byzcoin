@@ -481,7 +481,6 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 		log.Print("follower started protocol", s.ServerIdentity())
 	}
 
-
 	// Note to my future self: s.txBuffer.add used to be out here. It used to work
 	// even. But while investigating other race conditions, we realized that
 	// IF there will be a wait channel, THEN it must exist before the call to add().
@@ -498,7 +497,6 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 		if err != nil {
 			return nil, xerrors.Errorf("couldn't get block info: %v", err)
 		}
-
 
 		ch := s.notifications.registerForBlocks()
 		defer s.notifications.unregisterForBlocks(ch)
