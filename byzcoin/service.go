@@ -436,6 +436,7 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 		log.LLvl1("Error getting the leader", err)
 	}
 
+	ctxHash := req.Transaction.Instructions.Hash()
 	//log.Print("new transaction to be added. Leader : ", leader, " current ", s.ServerIdentity())
 
 	//check if leader if leader, write ctx to ctxChan
@@ -479,6 +480,7 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 		log.Print("follower started protocol", s.ServerIdentity())
 	}
 
+
 	// Note to my future self: s.txBuffer.add used to be out here. It used to work
 	// even. But while investigating other race conditions, we realized that
 	// IF there will be a wait channel, THEN it must exist before the call to add().
@@ -496,7 +498,7 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 			return nil, xerrors.Errorf("couldn't get block info: %v", err)
 		}
 
-		ctxHash := req.Transaction.Instructions.Hash()
+
 		ch := s.notifications.registerForBlocks()
 		defer s.notifications.unregisterForBlocks(ch)
 

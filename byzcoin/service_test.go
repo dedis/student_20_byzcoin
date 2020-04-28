@@ -204,7 +204,6 @@ func testAddTransaction(t *testing.T, blockInterval time.Duration, sendToIdx int
 	// the operations below should succeed
 	// add the first tx
 	log.Lvl1("adding the first tx")
-	log.Print("adding the first tx")
 	tx1, err := createOneClientTxWithCounter(s.darc.GetBaseID(), dummyContract, s.value, s.signer, 1)
 	akvresp, err = s.service().AddTransaction(&AddTxRequest{
 		Version:       CurrentVersion,
@@ -219,7 +218,6 @@ func testAddTransaction(t *testing.T, blockInterval time.Duration, sendToIdx int
 
 	// add the second tx
 	log.Lvl1("adding the second tx")
-	log.Print("adding the second tx")
 	value2 := []byte("value2")
 	tx2, err := createOneClientTxWithCounter(s.darc.GetBaseID(), dummyContract, value2, s.signer, 2)
 	require.NoError(t, err)
