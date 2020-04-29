@@ -572,7 +572,6 @@ func TestService_AutomaticVersionUpgrade(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-
 		header, err := decodeBlockHeader(&proof.Proof.Latest)
 		require.NoError(t, err)
 
