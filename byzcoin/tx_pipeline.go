@@ -406,7 +406,6 @@ func (p *txPipeline) processTxs(initialState *txProcessorState) {
 					break
 				}
 
-
 				// An upgrade is done synchronously so that other operations
 				// are not performed until the upgrade is done.
 
