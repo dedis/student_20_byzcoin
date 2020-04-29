@@ -569,12 +569,15 @@ func TestService_AutomaticVersionUpgrade(t *testing.T) {
 		})
 		require.NoError(t, err)
 
+
 		header, err := decodeBlockHeader(&proof.Proof.Latest)
+		log.Print("verify header vs current", header.Version, CurrentVersion)
 		if header.Version == CurrentVersion {
 			close(closing)
 			wg.Wait()
 			return
 		}
+		log.Print("should have returned", i)
 	}
 
 	close(closing)

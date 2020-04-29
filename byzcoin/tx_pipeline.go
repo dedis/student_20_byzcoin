@@ -401,11 +401,11 @@ func (p *txPipeline) processTxs(initialState *txProcessorState) {
 		for {
 			select {
 			case version := <-p.needUpgrade:
-				log.Print("need upgrade")
 				if version <= currentVersion {
 					// Prevent multiple upgrade blocks for the same version.
 					break
 				}
+
 
 				// An upgrade is done synchronously so that other operations
 				// are not performed until the upgrade is done.
@@ -488,7 +488,7 @@ func (p *txPipeline) processTxs(initialState *txProcessorState) {
 					log.Lvl3("stopping txs processor")
 					return
 				}
-				log.Print("received new tx from service", len(tx.Instructions), ok)
+				//log.Print("received new tx from service", len(tx.Instructions), ok)
 
 				txh := tx.Instructions.HashWithSignatures()
 				for _, txHash := range txHashes {
