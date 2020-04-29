@@ -440,10 +440,12 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 	ctxHash := req.Transaction.Instructions.Hash()
 	//log.Print("new transaction to be added. Leader : ", leader, " current ", s.ServerIdentity())
 
+
 	//check if leader if leader, write ctx to ctxChan
 	if s.ServerIdentity().Equal(leader) {
-		log.Print("leader sent new tx to the pipeline", leader, "len instructions", len(req.Transaction.Instructions))
+		//log.Print("leader sent new tx to the pipeline", leader, "len instructions", len(req.Transaction.Instructions))
 		s.txPipeline.ctxChan <- req.Transaction
+		//s.txPipeline.needUpgrade <-req.Version
 	} else {
 		// if not leader start protocol, create new tree point to point with leader
 		latest, err := s.db().GetLatestByID(req.SkipchainID)
@@ -517,6 +519,7 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 			s.txPipeline = &pipeline
 		}
 
+
 		/*
 			res, err := s.txPipeline.processor.RollupTx()
 			if err != nil {
@@ -567,6 +570,8 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 		//} else {
 		//	s.txBuffer.add(string(req.SkipchainID), req.Transaction)
 	}
+	//TODO : check that this is the correct place to send the upgrade signal
+	s.txPipeline.needUpgrade <-req.Version
 	return &AddTxResponse{Version: CurrentVersion}, nil
 }
 
