@@ -568,7 +568,9 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 		//	s.txBuffer.add(string(req.SkipchainID), req.Transaction)
 	}
 	//TODO : check that this is the correct place to send the upgrade signal
-	s.txPipeline.needUpgrade <- req.Version
+	if header.Version < req.Version {
+		s.txPipeline.needUpgrade <- req.Version
+	}
 	return &AddTxResponse{Version: CurrentVersion}, nil
 }
 
