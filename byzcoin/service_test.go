@@ -474,7 +474,7 @@ func TestService_AddTransactionVersion(t *testing.T) {
 	tx1, err := createOneClientTxWithCounter(s.darc.GetBaseID(), versionContract, []byte{0}, s.signer, 1)
 	require.NoError(t, err)
 	atx := &AddTxRequest{
-		Version:       CurrentVersion,
+		Version:       0,
 		SkipchainID:   s.genesis.SkipChainID(),
 		Transaction:   tx1,
 		InclusionWait: 10,
@@ -490,7 +490,7 @@ func TestService_AddTransactionVersion(t *testing.T) {
 	tx2, err := createOneClientTxWithCounter(s.darc.GetBaseID(), versionContract, []byte{1}, s.signer, 2)
 	require.NoError(t, err)
 	atx = &AddTxRequest{
-		Version:       CurrentVersion,
+		Version:       1,
 		SkipchainID:   s.genesis.SkipChainID(),
 		Transaction:   tx2,
 		InclusionWait: 10,
@@ -502,7 +502,7 @@ func TestService_AddTransactionVersion(t *testing.T) {
 	tx3, err := createOneClientTxWithCounter(s.darc.GetBaseID(), versionContract, []byte{0}, s.signer, 3)
 	require.NoError(t, err)
 	atx = &AddTxRequest{
-		Version:       CurrentVersion,
+		Version:       0,
 		SkipchainID:   s.genesis.SkipChainID(),
 		Transaction:   tx3,
 		InclusionWait: 10,
