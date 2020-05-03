@@ -455,7 +455,6 @@ func (p *txPipeline) processTxs(initialState *txProcessorState) {
 				// should always be non-empty, otherwise it's a
 				// programmer error
 				if len(currentState[0].txs) == 0 {
-					log.Print("breaks here", len(currentState[0].txs), "transactions")
 					break
 				}
 
