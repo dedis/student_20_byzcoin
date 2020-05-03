@@ -439,6 +439,8 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 	ctxHash := req.Transaction.Instructions.Hash()
 	//log.Print("new transaction to be added. Leader : ", leader, " current ", s.ServerIdentity())
 
+	//TODO : check that this is the correct place to send the upgrade signal
+
 	//check if leader if leader, write ctx to ctxChan
 	if s.ServerIdentity().Equal(leader) {
 		//log.Print("leader sent new tx to the pipeline", leader, "len instructions", len(req.Transaction.Instructions))
@@ -479,6 +481,25 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 			log.LLvl1("Error starting the protocol", err)
 		}
 		log.Print("follower started protocol", s.ServerIdentity())
+
+	}
+
+	if !s.ServerIdentity().Equal(leader) {
+		pipeline := txPipeline{
+			processor: &defaultTxProcessor{
+				stopCollect: make(chan bool),
+				latest:      latest,
+				scID:        req.SkipchainID,
+				Service:     s,
+			},
+		}
+
+		//Registering a new pipeline into the service
+		s.txPipeline = &pipeline
+	}
+
+	if header.Version < req.Version {
+		s.txPipeline.needUpgrade <- req.Version
 	}
 
 	// Note to my future self: s.txBuffer.add used to be out here. It used to work
@@ -503,19 +524,19 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 
 		//TODO : create new block if txBuffer is not empty directly after creating another one
 		s.txBuffer.add(string(req.SkipchainID), req.Transaction)
-		if !s.ServerIdentity().Equal(leader) {
-			scID := req.SkipchainID
-			pipeline := txPipeline{
-				processor: &defaultTxProcessor{
-					stopCollect: make(chan bool),
-					latest:      latest,
-					scID:        scID,
-					Service:     s,
-				},
-			}
-			//Registering a new pipeline into the service
-			s.txPipeline = &pipeline
-		}
+		/*
+			if !s.ServerIdentity().Equal(leader) {
+				pipeline := txPipeline{
+					processor: &defaultTxProcessor{
+						stopCollect: make(chan bool),
+						latest:      latest,
+						scID:        req.SkipchainID,
+						Service:     s,
+					},
+				}
+				//Registering a new pipeline into the service
+				s.txPipeline = &pipeline
+			}*/
 
 		/*
 			res, err := s.txPipeline.processor.RollupTx()
@@ -566,10 +587,6 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 		}
 		//} else {
 		//	s.txBuffer.add(string(req.SkipchainID), req.Transaction)
-	}
-	//TODO : check that this is the correct place to send the upgrade signal
-	if header.Version < req.Version {
-		s.txPipeline.needUpgrade <- req.Version
 	}
 	return &AddTxResponse{Version: CurrentVersion}, nil
 }
