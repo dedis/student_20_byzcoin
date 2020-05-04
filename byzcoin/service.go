@@ -446,6 +446,9 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 		//log.Print("leader sent new tx to the pipeline", leader, "len instructions", len(req.Transaction.Instructions))
 		s.txPipeline.ctxChan <- req.Transaction
 		//s.txPipeline.needUpgrade <-req.Version
+		if header.Version < req.Version {
+			s.txPipeline.needUpgrade <- req.Version
+		}
 	} else {
 		// if not leader start protocol, create new tree point to point with leader
 		latest, err := s.db().GetLatestByID(req.SkipchainID)
@@ -484,23 +487,8 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 
 	}
 
-	if !s.ServerIdentity().Equal(leader) {
-		pipeline := txPipeline{
-			processor: &defaultTxProcessor{
-				stopCollect: make(chan bool),
-				latest:      latest,
-				scID:        req.SkipchainID,
-				Service:     s,
-			},
-		}
 
-		//Registering a new pipeline into the service
-		s.txPipeline = &pipeline
-	}
 
-	if header.Version < req.Version {
-		s.txPipeline.needUpgrade <- req.Version
-	}
 
 	// Note to my future self: s.txBuffer.add used to be out here. It used to work
 	// even. But while investigating other race conditions, we realized that
@@ -524,6 +512,7 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 
 		//TODO : create new block if txBuffer is not empty directly after creating another one
 		s.txBuffer.add(string(req.SkipchainID), req.Transaction)
+
 		/*
 			if !s.ServerIdentity().Equal(leader) {
 				pipeline := txPipeline{
@@ -1990,6 +1979,7 @@ func (s *Service) startPolling(scID skipchain.SkipBlockID) chan bool {
 			" This function should never be called on a skipchain that does not exist.", err)
 		//return nil, xerrors.Errorf("reading latest: %v", err)
 	}
+
 	pipeline := txPipeline{
 		processor: &defaultTxProcessor{
 			stopCollect: make(chan bool),
@@ -2024,7 +2014,7 @@ func (s *Service) startPolling(scID skipchain.SkipBlockID) chan bool {
 		defer s.working.Done()
 		s.closedMutex.Unlock()
 		log.Print("started pipeline", s.ServerIdentity())
-		pipeline.start(&initialState, stopChan)
+		s.txPipeline.start(&initialState, stopChan)
 	}()
 	return stopChan
 }
@@ -2765,6 +2755,7 @@ func (s *Service) startAllChains() error {
 		go s.monitorLeaderFailure()
 	}()
 
+
 	return nil
 }
 
@@ -2798,6 +2789,7 @@ func (s *Service) startChain(genesisID skipchain.SkipBlockID) error {
 		return xerrors.Errorf("%s ignoring chain %x where latest block cannot be found: %v",
 			s.ServerIdentity(), genesisID, err)
 	}
+
 
 	leader, err := s.getLeader(genesisID)
 	if err != nil {
