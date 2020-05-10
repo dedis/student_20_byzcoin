@@ -58,6 +58,9 @@ type structRequestAdded struct {
 	RequestAdded
 }
 
+// RequestAdded is the message that is sent in the requestAddedChan after a
+// channel has been registered, in order for Dispatch() to become aware of
+// the newly registered channel.
 type RequestAdded struct {
 }
 

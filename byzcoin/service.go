@@ -2628,36 +2628,35 @@ func (s *Service) startViewChange(gen skipchain.SkipBlockID,
 	latest, err := s.db().GetLatestByID(gen)
 	if err != nil {
 		return fmt.Errorf("failed to get the latest block: %v", err)
-	} else {
-		// Send only if the latest block is consistent as it wouldn't
-		// anyway if we're out of sync with the chain
-		req := viewchange.InitReq{
-			SignerID: s.ServerIdentity().ID,
-			View: viewchange.View{
-				ID:          latest.Hash,
-				Gen:         gen,
-				LeaderIndex: 1,
-			},
+	}
+	// Send only if the latest block is consistent as it wouldn't
+	// anyway if we're out of sync with the chain
+	req := viewchange.InitReq{
+		SignerID: s.ServerIdentity().ID,
+		View: viewchange.View{
+			ID:          latest.Hash,
+			Gen:         gen,
+			LeaderIndex: 1,
+		},
+	}
+	s.viewChangeMan.addReq(req)
+	if tx != nil {
+		cl := onet.NewClient(cothority.Suite, ServiceName)
+		buf, err := protobuf.Encode(&AddTxRequest{
+			Version:       CurrentVersion,
+			SkipchainID:   latest.SkipChainID(),
+			Transaction:   *tx,
+			InclusionWait: 0,
+			Flags:         1,
+		})
+		if err != nil {
+			return fmt.Errorf("couldn't encode request: %v", err)
 		}
-		s.viewChangeMan.addReq(req)
-		if tx != nil {
-			cl := onet.NewClient(cothority.Suite, ServiceName)
-			buf, err := protobuf.Encode(&AddTxRequest{
-				Version:       CurrentVersion,
-				SkipchainID:   latest.SkipChainID(),
-				Transaction:   *tx,
-				InclusionWait: 0,
-				Flags:         1,
-			})
+		for _, si := range latest.Roster.List[1:] {
+			_, err := cl.Send(si, "AddTxRequest", buf)
 			if err != nil {
-				return fmt.Errorf("couldn't encode request: %v", err)
-			}
-			for _, si := range latest.Roster.List[1:] {
-				_, err := cl.Send(si, "AddTxRequest", buf)
-				if err != nil {
-					log.Error(s.ServerIdentity(), "couldn't send transaction to",
-						si, err)
-				}
+				log.Error(s.ServerIdentity(), "couldn't send transaction to",
+					si, err)
 			}
 		}
 	}
