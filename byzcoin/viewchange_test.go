@@ -271,13 +271,9 @@ func TestViewChange_NeedCatchUp(t *testing.T) {
 	require.NoError(t, err)
 	s.sendTxTo(t, tx1, 0)
 
-	time.Sleep(5 * time.Second)
-
-	// Kill the leader, but the view change won't happen as
-	// 2 nodes are down
+	// Kill the leader and start host[3] again
 	s.services[0].TestClose()
 	s.hosts[0].Pause()
-
 	s.hosts[3].Unpause()
 	// This will trigger the proof to be propagated. In that test, the catch up
 	// won't be trigger as only one block is missing.
@@ -286,6 +282,12 @@ func TestViewChange_NeedCatchUp(t *testing.T) {
 		Gen:         s.genesis.SkipChainID(),
 		LeaderIndex: 1,
 	})
+
+	// Trigger a viewchange
+	// Create a block that host 4 will miss
+	tx1, err = createOneClientTx(s.darc.GetBaseID(), dummyContract, s.value, s.signer)
+	require.NoError(t, err)
+	s.sendTxTo(t, tx1, 3)
 
 	// It will need a few seconds if it catches the leader index 1 and a bit
 	// more if it goes to the leader index 2 so we give enough time.
