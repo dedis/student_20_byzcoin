@@ -50,7 +50,7 @@ func TestOnchain(t *testing.T) {
 
 	// Decryption
 	UI := make([]*share.PubShare, nbrPeers)
-	for i := range Ui {
+	for i := range UI {
 		dks, err := dkgs[i].DistKeyShare()
 		require.NoError(t, err)
 		v := suite.Point().Mul(dks.Share.V, U)

@@ -128,7 +128,7 @@ func (o *OCS) reencrypt(r structReencrypt) error {
 
 	return cothority.ErrorOrNil(
 		o.SendToParent(&ReencryptReply{
-			Ui: ui,
+			UI: ui,
 			Ei: ei,
 			Fi: cothority.Suite.Scalar().Add(si, cothority.Suite.Scalar().Mul(ei, o.Shared.V)),
 		}),
