@@ -49,7 +49,7 @@ func TestOnchain(t *testing.T) {
 	xc := key.NewKeyPair(cothority.Suite)
 
 	// Decryption
-	Ui := make([]*share.PubShare, nbrPeers)
+	UI := make([]*share.PubShare, nbrPeers)
 	for i := range Ui {
 		dks, err := dkgs[i].DistKeyShare()
 		require.NoError(t, err)
