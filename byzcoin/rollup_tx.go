@@ -126,7 +126,6 @@ func (p *RollupTxProtocol) Start() error {
 	if len(p.LatestID) == 0 {
 		return xerrors.New("missing latest skipblock ID")
 	}
-	//log.Print("children", p.Children()[0], p.ServerIdentity())
 	err := p.SendTo(p.Children()[0], p.NewTx)
 	if err != nil {
 		log.LLvl1("Error sending to children", err)
@@ -152,13 +151,9 @@ func (p *RollupTxProtocol) Dispatch() error {
 		}
 	}
 
-	//TODO : should we close this channel?
-	//defer close(p.CtxChan)
 	p.CtxChan <- (<-p.addRequestChan).Transaction
 	log.Print("Sent transaction to the pipeline, through follower", p.ServerIdentity())
 	return p.SendToParent(&RequestAdded{})
-	// wait for the results to come back and write to the channel
-	//defer close(p.TxsChan)
 }
 
 // Shutdown closes the closing channel to abort any waiting on messages.

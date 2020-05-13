@@ -430,24 +430,17 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 
 	leader, err := s.getLeader(req.SkipchainID)
 	if err != nil {
-		log.LLvl1("Error getting the leader", err)
+		log.Lvlf1("Error getting the leader", err)
 	}
 
 	ctxHash := req.Transaction.Instructions.Hash()
-	//log.Print("new transaction to be added. Leader : ", leader, " current ", s.ServerIdentity())
 
-	//TODO : check that this is the correct place to send the upgrade signal
-
-	//check if leader if leader, write ctx to ctxChan
 	if s.ServerIdentity().Equal(leader) {
-		//log.Print("leader sent new tx to the pipeline", leader, "len instructions", len(req.Transaction.Instructions))
 		s.txPipeline.ctxChan <- req.Transaction
-		//s.txPipeline.needUpgrade <-req.Version
 		if header.Version < req.Version {
 			s.txPipeline.needUpgrade <- req.Version
 		}
 	} else {
-		// if not leader start protocol, create new tree point to point with leader
 		latest, err := s.db().GetLatestByID(req.SkipchainID)
 		if err != nil {
 			log.Errorf("Error while searching for %x", req.SkipchainID[:])
@@ -519,42 +512,6 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 		//TODO : create new block if txBuffer is not empty directly after creating another one
 		s.txBuffer.add(string(req.SkipchainID), req.Transaction)
 
-		/*
-			if !s.ServerIdentity().Equal(leader) {
-				pipeline := txPipeline{
-					processor: &defaultTxProcessor{
-						stopCollect: make(chan bool),
-						latest:      latest,
-						scID:        req.SkipchainID,
-						Service:     s,
-					},
-				}
-				//Registering a new pipeline into the service
-				s.txPipeline = &pipeline
-			}*/
-
-		/*
-			res, err := s.txPipeline.processor.RollupTx()
-			if err != nil {
-				log.Error("failed to collect transactions", err)
-			}
-			//log.LLvl1("got", len(res.Txs), "transactions")
-			for _, tx := range res.Txs {
-				select {
-				//TODO B : use this channel in leader
-				case s.txPipeline.ctxChan <- tx:
-					log.Print("Hello")
-					// channel not full, do nothing
-				default:
-					log.Warn("dropping transactions because there are too many")
-				}
-			}
-		*/
-		/*
-			s.txPipeline.ctxChan <- req.Transaction
-		*/
-		//s.txBuffer.add(string(req.SkipchainID), req.Transaction)
-
 		// In case we don't have any blocks, because there are no transactions,
 		// have a hard timeout in twice the minimal expected time to create the
 		// blocks.
@@ -580,8 +537,6 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 				return nil, xerrors.Errorf("transaction didn't get included after %v (2 * t_block * %d)", tooLongDur, req.InclusionWait)
 			}
 		}
-		//} else {
-		//	s.txBuffer.add(string(req.SkipchainID), req.Transaction)
 	}
 	return &AddTxResponse{Version: CurrentVersion}, nil
 }
@@ -1099,7 +1054,6 @@ func (s *Service) SetPropagationTimeout(p time.Duration) {
 // Here we use it to pass our s.txPipeline.ctxChan to the RollupTxProtocol.
 func (s *Service) NewProtocol(ti *onet.TreeNodeInstance, conf *onet.GenericConfig) (pi onet.ProtocolInstance, err error) {
 	// This is the byzcoin leader receiving a new ClientTransaction from a node.
-	//log.Print("protocol name", ti.ProtocolName())
 	if ti.ProtocolName() == rollupTxProtocol {
 		pi, err = NewRollupTxProtocol(ti)
 		if err != nil {
@@ -1108,8 +1062,6 @@ func (s *Service) NewProtocol(ti *onet.TreeNodeInstance, conf *onet.GenericConfi
 		}
 
 		rtx := pi.(*RollupTxProtocol)
-		//	log.Print("server id", s.ServerIdentity())
-		//	log.Print("ctx chan", s.txPipeline.ctxChan)
 		rtx.CtxChan = s.txPipeline.ctxChan
 	}
 	return

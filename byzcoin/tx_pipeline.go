@@ -110,14 +110,6 @@ func (s *defaultTxProcessor) RollupTx() (*rollupTxResult, error) {
 		return nil, xerrors.Errorf("reading config: %v", err)
 	}
 
-	/*
-		if s.skService().ChainIsProcessing(s.scID) {
-			// When a block is processed,
-			// return immediately without processing any tx from the nodes.
-			return &collectTxResult{Txs: nil, CommonVersion: 0}, nil
-		}
-	*/
-
 	latest, err := s.db().GetLatestByID(s.scID)
 	if err != nil {
 		log.Errorf("Error while searching for %x", s.scID[:])
@@ -146,25 +138,6 @@ func (s *defaultTxProcessor) RollupTx() (*rollupTxResult, error) {
 	root.SkipchainID = s.scID
 	root.LatestID = latest.Hash
 
-	/*
-		//root.Service = s.Service
-		// When a block is processed, we prevent conodes to send us back transactions
-		// until the next collection.
-		if !isNotProcessingBlock {
-			root.MaxNumTxs = 0
-		}
-	*/
-
-	/*
-		if err := root.Start(); err != nil {
-			log.Error(s.ServerIdentity(), "Failed to start the protocol with error."+
-				" Start() only returns an error when the protocol is not initialised correctly,"+
-				" e.g., not all the required fields are set."+
-				" If you see this message then there may be a programmer error.", err)
-			return nil, xerrors.Errorf("starting protocol: %v", err)
-		}
-	*/
-
 	// When we poll, the child nodes must reply within half of the block
 	// interval, because we'll use the other half to process the
 	// transactions.
@@ -184,19 +157,6 @@ rollupTxLoop:
 			log.Print("RECEIVED SOMETHING HERE?", newTxs)
 			txs = append(txs, newTxs)
 			break rollupTxLoop
-			/*
-				if more {
-					for _, ct := range newTxs {
-						txsz := txSize(TxResult{ClientTransaction: ct})
-						if txsz < bcConfig.MaxBlockSize {
-							txs = append(txs, ct)
-						} else {
-							log.Lvl2(s.ServerIdentity(), "dropping collected transaction with length", txsz)
-						}
-					}
-				} else {
-
-				}*/
 		case <-protocolTimeout:
 			log.Lvl2(s.ServerIdentity(), "timeout while collecting transactions from other nodes")
 			close(root.Finish)
@@ -338,8 +298,6 @@ func (p *txPipeline) start(initialState *txProcessorState, stopSignal chan bool)
 	p.ctxChan = make(chan ClientTransaction, 200)
 	p.needUpgrade = make(chan Version, 1)
 
-	//TODO : Should we replace the collectTx method?
-	//p.collectTx()
 	p.processTxs(initialState)
 	<-stopSignal
 
@@ -348,46 +306,6 @@ func (p *txPipeline) start(initialState *txProcessorState, stopSignal chan bool)
 	p.wg.Wait()
 }
 
-/*
-//TODO : we won't need this function anymore
-func (p *txPipeline) collectTx() {
-	p.wg.Add(1)
-
-	// set the polling interval to half of the block interval
-	go func() {
-		defer p.wg.Done()
-		for {
-			interval := p.processor.GetInterval()
-			select {
-			case <-p.stopCollect:
-				log.Lvl3("stopping tx collector")
-				log.LLvl1("stopping tx collector")
-				close(p.ctxChan)
-				return
-			case <-time.After(interval / 2):
-				res, err := p.processor.RollupTx()
-				if err != nil {
-					log.Error("failed to collect transactions", err)
-				}
-
-				// If a common version is found, it is sent anyway and the processing
-				// will check if it is necessary to upgrade.
-				p.needUpgrade <- res.CommonVersion
-
-				for _, tx := range res.Txs {
-					select {
-					//TODO B : use this channel in leader
-					case p.ctxChan <- tx:
-						// channel not full, do nothing
-					default:
-						log.Warn("dropping transactions because there are too many")
-					}
-				}
-			}
-		}
-	}()
-}
-*/
 var maxTxHashes = 1000
 
 // processTxs consumes transactions and computes the new txResults
