@@ -16,7 +16,6 @@ import (
 	"sync"
 	"time"
 
-	uuid "gopkg.in/satori/go.uuid.v1"
 	"go.dedis.ch/cothority/v3"
 	"go.dedis.ch/cothority/v3/blscosi/protocol"
 	"go.dedis.ch/cothority/v3/byzcoin/trie"
@@ -33,6 +32,7 @@ import (
 	"go.dedis.ch/protobuf"
 	"go.etcd.io/bbolt"
 	"golang.org/x/xerrors"
+	uuid "gopkg.in/satori/go.uuid.v1"
 )
 
 var pairingSuite = suites.MustFind("bn256.adapter").(*pairing.SuiteBn256)
@@ -2464,7 +2464,7 @@ func (s *Service) processOneTx(sst *stagingStateTrie, tx ClientTransaction,
 				return nil, nil, err
 			}
 		}
-		
+
 		// Insert the new instructions in the transaction, to be executed right
 		// after the current one.
 		// See https://github.com/golang/go/wiki/SliceTricks#insert for the

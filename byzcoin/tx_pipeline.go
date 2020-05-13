@@ -111,11 +111,11 @@ func (s *defaultTxProcessor) RollupTx() (*rollupTxResult, error) {
 	}
 
 	/*
-	if s.skService().ChainIsProcessing(s.scID) {
-		// When a block is processed,
-		// return immediately without processing any tx from the nodes.
-		return &collectTxResult{Txs: nil, CommonVersion: 0}, nil
-	}
+		if s.skService().ChainIsProcessing(s.scID) {
+			// When a block is processed,
+			// return immediately without processing any tx from the nodes.
+			return &collectTxResult{Txs: nil, CommonVersion: 0}, nil
+		}
 	*/
 
 	latest, err := s.db().GetLatestByID(s.scID)
@@ -146,15 +146,14 @@ func (s *defaultTxProcessor) RollupTx() (*rollupTxResult, error) {
 	root.SkipchainID = s.scID
 	root.LatestID = latest.Hash
 
-
 	/*
-	//root.Service = s.Service
-=======
-	// When a block is processed, we prevent conodes to send us back transactions
-	// until the next collection.
-	if !isNotProcessingBlock {
-		root.MaxNumTxs = 0
-	}
+		//root.Service = s.Service
+	=======
+		// When a block is processed, we prevent conodes to send us back transactions
+		// until the next collection.
+		if !isNotProcessingBlock {
+			root.MaxNumTxs = 0
+		}
 	*/
 
 	/*
