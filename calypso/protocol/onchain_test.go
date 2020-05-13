@@ -55,7 +55,7 @@ func TestOnchain(t *testing.T) {
 		require.NoError(t, err)
 		v := suite.Point().Mul(dks.Share.V, U)
 		v.Add(v, suite.Point().Mul(dks.Share.V, xc.Public))
-		Ui[i] = &share.PubShare{
+		UI[i] = &share.PubShare{
 			I: i,
 			V: v,
 		}
