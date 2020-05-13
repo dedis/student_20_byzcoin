@@ -428,7 +428,7 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 
 	leader, err := s.getLeader(req.SkipchainID)
 	if err != nil {
-		log.Lvlv1("Error getting the leader", err)
+		log.LLvl1("Error getting the leader", err)
 	}
 
 	ctxHash := req.Transaction.Instructions.Hash()
