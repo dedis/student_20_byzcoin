@@ -60,8 +60,6 @@ const defaultRotationWindow time.Duration = 10
 
 const noTimeout time.Duration = 0
 
-const collectTxProtocol = "CollectTxProtocol"
-
 const viewChangeSubFtCosi = "viewchange_sub_ftcosi"
 const viewChangeFtCosi = "viewchange_ftcosi"
 

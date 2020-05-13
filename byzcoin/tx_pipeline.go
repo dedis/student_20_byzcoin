@@ -14,7 +14,7 @@ import (
 )
 
 // rollupTxResult contains the aggregated response of the conodes to the
-// collectTx protocol.
+// rollupTx protocol.
 type rollupTxResult struct {
 	Txs           []ClientTransaction
 	CommonVersion Version

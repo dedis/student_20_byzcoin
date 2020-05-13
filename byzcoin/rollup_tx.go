@@ -64,37 +64,8 @@ type structRequestAdded struct {
 type RequestAdded struct {
 }
 
-//// RollupTxRequest is the request message that asks the receiver to send their
-//// pending transactions back to the leader.
-//type RollupTxRequest struct {
-//	SkipchainID skipchain.SkipBlockID
-//	LatestID    skipchain.SkipBlockID
-//	MaxNumTxs   int
-//	Version     int
-//}
-//
-//// RollupTxResponse is the response message that contains all the pending
-//// transactions on the node.
-//type RollupTxResponse struct {
-//	Txs            []ClientTransaction
-//	ByzcoinVersion Version
-//}
-
-/*
-type structRollupTxRequest struct {
-	*onet.TreeNode
-	CollectTxRequest
-}
-
-type structRollupTxResponse struct {
-	*onet.TreeNode
-	CollectTxResponse
-}
-*/
-
 // NewRollupTxProtocol is used for registering the protocol.
 // was in the signature before :
-// TODO modify signature here to add ctx chan instead
 func NewRollupTxProtocol(node *onet.TreeNodeInstance) (onet.ProtocolInstance, error) {
 	c := &RollupTxProtocol{
 		TreeNodeInstance: node,
