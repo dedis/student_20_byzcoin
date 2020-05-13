@@ -62,7 +62,7 @@ func TestOnchain(t *testing.T) {
 	}
 
 	// XhatEnc is the re-encrypted share under the reader's public key
-	XhatEnc, err := share.RecoverCommit(suite, Ui, threshold, nbrPeers)
+	XhatEnc, err := share.RecoverCommit(suite, UI, threshold, nbrPeers)
 	require.NoError(t, err)
 
 	// Decrypt XhatEnc
