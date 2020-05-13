@@ -110,11 +110,13 @@ func (s *defaultTxProcessor) RollupTx() (*rollupTxResult, error) {
 		return nil, xerrors.Errorf("reading config: %v", err)
 	}
 
+	/*
 	if s.skService().ChainIsProcessing(s.scID) {
 		// When a block is processed,
 		// return immediately without processing any tx from the nodes.
 		return &collectTxResult{Txs: nil, CommonVersion: 0}, nil
 	}
+	*/
 
 	latest, err := s.db().GetLatestByID(s.scID)
 	if err != nil {

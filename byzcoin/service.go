@@ -8,7 +8,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"go.dedis.ch/onet/v3/simul/monitor"
 	"math"
 	"net"
 	"net/http"
