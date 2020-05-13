@@ -128,7 +128,7 @@ func (o *OCS) reencrypt(r structReencrypt) error {
 
 	return cothority.ErrorOrNil(
 		o.SendToParent(&ReencryptReply{
-			UI: ui,
+			Ui: ui,
 			Ei: ei,
 			Fi: cothority.Suite.Scalar().Add(si, cothority.Suite.Scalar().Mul(ei, o.Shared.V)),
 		}),
@@ -139,7 +139,7 @@ func (o *OCS) reencrypt(r structReencrypt) error {
 // reencryptReply is the root-node waiting for all replies and generating
 // the reencryption key.
 func (o *OCS) reencryptReply(rr structReencryptReply) error {
-	if rr.ReencryptReply.UI == nil {
+	if rr.ReencryptReply.Ui == nil {
 		log.Lvl2("Node", rr.ServerIdentity, "refused to reply")
 		o.Failures++
 		if o.Failures > len(o.Roster().List)-o.Threshold {
@@ -158,22 +158,22 @@ func (o *OCS) reencryptReply(rr structReencryptReply) error {
 		for _, r := range o.replies {
 			// Verify proofs
 			ufi := cothority.Suite.Point().Mul(r.Fi, cothority.Suite.Point().Add(o.U, o.Xc))
-			uiei := cothority.Suite.Point().Mul(cothority.Suite.Scalar().Neg(r.Ei), r.UI.V)
+			uiei := cothority.Suite.Point().Mul(cothority.Suite.Scalar().Neg(r.Ei), r.Ui.V)
 			uiHat := cothority.Suite.Point().Add(ufi, uiei)
 
 			gfi := cothority.Suite.Point().Mul(r.Fi, nil)
-			gxi := o.Poly.Eval(r.UI.I).V
+			gxi := o.Poly.Eval(r.Ui.I).V
 			hiei := cothority.Suite.Point().Mul(cothority.Suite.Scalar().Neg(r.Ei), gxi)
 			hiHat := cothority.Suite.Point().Add(gfi, hiei)
 			hash := sha256.New()
-			r.UI.V.MarshalTo(hash)
+			r.Ui.V.MarshalTo(hash)
 			uiHat.MarshalTo(hash)
 			hiHat.MarshalTo(hash)
 			e := cothority.Suite.Scalar().SetBytes(hash.Sum(nil))
 			if e.Equal(r.Ei) {
-				o.Uis[r.UI.I] = r.UI
+				o.Uis[r.Ui.I] = r.Ui
 			} else {
-				log.Lvl1("Received invalid share from node", r.UI.I)
+				log.Lvl1("Received invalid share from node", r.Ui.I)
 			}
 		}
 		o.finish(true)

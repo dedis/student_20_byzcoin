@@ -49,20 +49,20 @@ func TestOnchain(t *testing.T) {
 	xc := key.NewKeyPair(cothority.Suite)
 
 	// Decryption
-	UI := make([]*share.PubShare, nbrPeers)
-	for i := range UI {
+	Ui := make([]*share.PubShare, nbrPeers)
+	for i := range Ui {
 		dks, err := dkgs[i].DistKeyShare()
 		require.NoError(t, err)
 		v := suite.Point().Mul(dks.Share.V, U)
 		v.Add(v, suite.Point().Mul(dks.Share.V, xc.Public))
-		UI[i] = &share.PubShare{
+		Ui[i] = &share.PubShare{
 			I: i,
 			V: v,
 		}
 	}
 
 	// XhatEnc is the re-encrypted share under the reader's public key
-	XhatEnc, err := share.RecoverCommit(suite, UI, threshold, nbrPeers)
+	XhatEnc, err := share.RecoverCommit(suite, Ui, threshold, nbrPeers)
 	require.NoError(t, err)
 
 	// Decrypt XhatEnc
