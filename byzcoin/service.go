@@ -2472,7 +2472,6 @@ func (s *Service) processOneTx(sst *stagingStateTrie, tx ClientTransaction,
 		tx.Instructions = append(tx.Instructions, newInstructions...)
 		copy(tx.Instructions[i+1+len(newInstructions):], tx.Instructions[i+1:])
 		copy(tx.Instructions[i+1:], newInstructions)
-
 		if err = sst.StoreAll(counterScs); err != nil {
 			err = xerrors.Errorf("%s StoreAll failed to add counter changes: %v",
 				s.ServerIdentity(), err)

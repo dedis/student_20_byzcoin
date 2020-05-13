@@ -98,6 +98,13 @@ jobs:
           npm ci &&
           npm version prerelease --preid=p`date +%y%m.%d%H.%M%S` &&
           ./publish.sh --tag dev
+=======
+
+    - stage: test
+      <<: *language_go_1_13
+      script: GO111MODULE=on go test -short -v ./byzcoin
+
+>>>>>>> 0ac0a56f784ead7a2bf2b8aacd2f89148b1068fc
 notifications:
   email: false
 
