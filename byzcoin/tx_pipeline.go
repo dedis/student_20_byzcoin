@@ -148,7 +148,6 @@ func (s *defaultTxProcessor) RollupTx() (*rollupTxResult, error) {
 
 	/*
 		//root.Service = s.Service
-	=======
 		// When a block is processed, we prevent conodes to send us back transactions
 		// until the next collection.
 		if !isNotProcessingBlock {
