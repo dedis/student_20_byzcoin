@@ -428,7 +428,7 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 
 	leader, err := s.getLeader(req.SkipchainID)
 	if err != nil {
-		log.LLvl1("Error getting the leader", err)
+		return nil, xerrors.Errorf("Error getting the leader", err)
 	}
 
 	ctxHash := req.Transaction.Instructions.Hash()
@@ -469,9 +469,8 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 		root.NewTx = req
 		err = proto.Start()
 		if err != nil {
-			log.LLvl1("Error starting the protocol", err)
+			return nil, xerrors.Errorf("Error starting the protocol", err)
 		}
-		log.Print("follower started protocol", s.ServerIdentity())
 		if err := <-root.DoneChan; err != nil {
 			log.Print("root failed - need to request a view-change")
 			var err error
@@ -1055,8 +1054,7 @@ func (s *Service) NewProtocol(ti *onet.TreeNodeInstance, conf *onet.GenericConfi
 	if ti.ProtocolName() == rollupTxProtocol {
 		pi, err = NewRollupTxProtocol(ti)
 		if err != nil {
-			log.LLvl1("Error calling new proto", err)
-			return
+			return nil, xerrors.Errorf("Error calling new proto", err)
 		}
 
 		rtx := pi.(*RollupTxProtocol)
@@ -1958,10 +1956,8 @@ func loadBlockInfo(st ReadOnlyStateTrie) (time.Duration, int, error) {
 func (s *Service) startPolling(scID skipchain.SkipBlockID) chan bool {
 	latest, err := s.db().GetLatestByID(scID)
 	if err != nil {
-		log.Errorf("Error while searching for %x", scID[:])
-		log.Error("DB is in bad state and cannot find skipchain anymore."+
-			" This function should never be called on a skipchain that does not exist.", err)
-		//return nil, xerrors.Errorf("reading latest: %v", err)
+		panic("DB is in bad state and cannot find skipchain anymore."+
+			" This function should never be called on a skipchain that does not exist." )
 	}
 
 	pipeline := txPipeline{
@@ -1997,7 +1993,6 @@ func (s *Service) startPolling(scID skipchain.SkipBlockID) chan bool {
 		s.working.Add(1)
 		defer s.working.Done()
 		s.closedMutex.Unlock()
-		log.Print("started pipeline", s.ServerIdentity())
 		s.txPipeline.start(&initialState, stopChan)
 	}()
 	return stopChan
