@@ -375,6 +375,13 @@ func (s *Service) prepareTxResponse(req *AddTxRequest, tx *TxResult) (*AddTxResp
 // error value to find out if an error has occured. The caller must also check
 // AddTxResponse.Error even if the error return value is nil.
 func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
+	s.closedMutex.Lock()
+	if s.closed {
+		s.closedMutex.Unlock()
+		return nil, errors.New("node is closed")
+	}
+	s.closedMutex.Unlock()
+
 	if len(req.Transaction.Instructions) == 0 {
 		return nil, xerrors.New("no transactions to add")
 	}
@@ -471,9 +478,9 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 		if err != nil {
 			log.LLvl1("Error starting the protocol", err)
 		}
-		log.Print("follower started protocol", s.ServerIdentity())
+		log.Print(s.ServerIdentity(), "follower started protocol")
 		if err := <-root.DoneChan; err != nil {
-			log.Print("root failed - need to request a view-change")
+			log.Print(s.ServerIdentity(), "root failed - need to request a view-change")
 			var err error
 			if req.Flags&1 > 0 {
 				err = s.startViewChange(req.SkipchainID, nil)
@@ -2733,20 +2740,15 @@ func (s *Service) startViewChange(gen skipchain.SkipBlockID,
 			return fmt.Errorf("couldn't encode request: %v", err)
 		}
 		for _, si := range latest.Roster.List[1:] {
+			log.Lvl2(s.ServerIdentity(), "sending addTxRequest to", si)
 			_, err := cl.Send(si, "AddTxRequest", buf)
 			if err != nil {
-				return fmt.Errorf("couldn't encode request: %v", err)
+				log.Error(s.ServerIdentity(), "couldn't send transaction to",
+					si, err)
 			}
-			for _, si := range latest.Roster.List[1:] {
-				_, err := cl.Send(si, "AddTxRequest", buf)
-				if err != nil {
-					log.Error(s.ServerIdentity(), "couldn't send transaction to",
-						si, err)
-				}
-				log.Lvlf2("Starting a view-change by putting our own request"+
-					": %+v", req)
-				s.viewChangeMan.addReq(req)
-			}
+			log.Lvlf2("Starting a view-change by putting our own request"+
+				": %+v", req)
+			s.viewChangeMan.addReq(req)
 		}
 	}
 	return nil

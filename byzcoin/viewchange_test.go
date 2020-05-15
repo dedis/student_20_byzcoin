@@ -20,7 +20,6 @@ import (
 // followers. Finally, we bring the failed nodes back up and they should
 // contain the transactions that they missed.
 func TestViewChange_Basic(t *testing.T) {
-	log.SetDebugVisible(2)
 	testViewChange(t, 4, 1, testInterval)
 }
 
@@ -107,6 +106,13 @@ func testViewChange(t *testing.T, nHosts, nFailures int, interval time.Duration)
 		require.True(t, leader.Equal(s.services[nFailures].ServerIdentity()), fmt.Sprintf("%v", leader))
 	}
 
+	counter := uint64(2)
+	tx1, err = createOneClientTxWithCounter(s.darc.GetBaseID(),
+		dummyContract, s.value, s.signer, counter)
+	require.NoError(t, err)
+	s.sendTxTo(t, tx1, nFailures+1)
+	counter++
+
 	// wait for the transaction to be stored everywhere
 	for i := nFailures; i < nHosts; i++ {
 		pr := s.waitProofWithIdx(t, tx1ID, i)
@@ -120,20 +126,28 @@ func testViewChange(t *testing.T, nHosts, nFailures int, interval time.Duration)
 		s.hosts[i].Unpause()
 		require.NoError(t, s.services[i].TestRestart())
 	}
+
+	tx1, err = createOneClientTxWithCounter(s.darc.GetBaseID(),
+		dummyContract, s.value, s.signer, counter)
+	require.NoError(t, err)
+	s.sendTxTo(t, tx1, nFailures+1)
+	counter++
+
 	for i := 0; i < nFailures; i++ {
 		pr := s.waitProofWithIdx(t, tx1ID, i)
 		require.True(t, pr.InclusionProof.Match(tx1ID))
 	}
 	s.waitPropagation(t, 0)
 
-	log.Lvl1("Sending 1st tx")
-	tx1, err = createOneClientTxWithCounter(s.darc.GetBaseID(), dummyContract, s.value, s.signer, 2)
-	require.NoError(t, err)
-	s.sendTxToAndWait(t, tx1, nFailures, 10)
-	log.Lvl1("Sending 2nd tx")
-	tx1, err = createOneClientTxWithCounter(s.darc.GetBaseID(), dummyContract, s.value, s.signer, 3)
-	require.NoError(t, err)
-	s.sendTxToAndWait(t, tx1, nFailures, 10)
+	for tx := 0; tx < 2; tx++ {
+		log.Lvlf1("Sending tx %d", tx)
+		tx1, err = createOneClientTxWithCounter(s.darc.GetBaseID(),
+			dummyContract, s.value, s.signer, counter)
+		require.NoError(t, err)
+		s.sendTxToAndWait(t, tx1, nFailures, 10)
+		counter++
+	}
+
 	log.Lvl1("Sent two tx")
 	s.waitPropagation(t, -1)
 }
