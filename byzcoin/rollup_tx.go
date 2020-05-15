@@ -99,6 +99,7 @@ func (p *RollupTxProtocol) Start() error {
 	}
 	err := p.SendTo(p.Children()[0], p.NewTx)
 	if err != nil {
+		log.LLvl1("Error sending to children", err)
 		p.Done()
 		return err
 	}
@@ -122,6 +123,7 @@ func (p *RollupTxProtocol) Dispatch() error {
 	}
 
 	p.CtxChan <- (<-p.addRequestChan).Transaction
+	log.Print("Sent transaction to the pipeline, through follower", p.ServerIdentity())
 	return p.SendToParent(&RequestAdded{})
 }
 

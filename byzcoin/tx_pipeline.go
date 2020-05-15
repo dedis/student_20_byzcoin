@@ -154,6 +154,7 @@ rollupTxLoop:
 			// can be the latest version available so it needs to check that to not create a
 			// block to upgrade from version x to x (which is not an upgrade per se).
 		case newTxs, _ := <-root.CtxChan:
+			log.Print("RECEIVED SOMETHING HERE?", newTxs)
 			txs = append(txs, newTxs)
 			break rollupTxLoop
 		case <-protocolTimeout:

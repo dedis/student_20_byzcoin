@@ -428,7 +428,7 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 
 	leader, err := s.getLeader(req.SkipchainID)
 	if err != nil {
-		return nil, xerrors.Errorf("Error getting the leader", err)
+		log.LLvl1("Error getting the leader", err)
 	}
 
 	ctxHash := req.Transaction.Instructions.Hash()
@@ -469,8 +469,9 @@ func (s *Service) AddTransaction(req *AddTxRequest) (*AddTxResponse, error) {
 		root.NewTx = req
 		err = proto.Start()
 		if err != nil {
-			return nil, xerrors.Errorf("Error starting the protocol", err)
+			log.LLvl1("Error starting the protocol", err)
 		}
+		log.Print("follower started protocol", s.ServerIdentity())
 		if err := <-root.DoneChan; err != nil {
 			log.Print("root failed - need to request a view-change")
 			var err error
@@ -1054,7 +1055,8 @@ func (s *Service) NewProtocol(ti *onet.TreeNodeInstance, conf *onet.GenericConfi
 	if ti.ProtocolName() == rollupTxProtocol {
 		pi, err = NewRollupTxProtocol(ti)
 		if err != nil {
-			return nil, xerrors.Errorf("Error calling new proto", err)
+			log.LLvl1("Error calling new proto", err)
+			return
 		}
 
 		rtx := pi.(*RollupTxProtocol)
@@ -1785,7 +1787,7 @@ func (s *Service) updateTrieCallback(sbID skipchain.SkipBlockID) error {
 			log.Lvlf2("%s started viewchangeMonitor for %x", s.ServerIdentity(), sb.SkipChainID())
 			s.viewChangeMan.add(s.sendViewChangeReq, s.sendNewView, s.isLeader, string(sb.SkipChainID()))
 			s.viewChangeMan.start(s.ServerIdentity().ID, sb.SkipChainID(), initialDur,
-			s.getSignatureThreshold(sb.Hash))
+				s.getSignatureThreshold(sb.Hash))
 		}
 	}
 	if !nodeInNew && s.viewChangeMan.started(sb.SkipChainID()) {
@@ -1960,8 +1962,10 @@ func loadBlockInfo(st ReadOnlyStateTrie) (time.Duration, int, error) {
 func (s *Service) startPolling(scID skipchain.SkipBlockID) chan bool {
 	latest, err := s.db().GetLatestByID(scID)
 	if err != nil {
-		panic("DB is in bad state and cannot find skipchain anymore."+
-			" This function should never be called on a skipchain that does not exist." )
+		log.Errorf("Error while searching for %x", scID[:])
+		log.Error("DB is in bad state and cannot find skipchain anymore."+
+			" This function should never be called on a skipchain that does not exist.", err)
+		//return nil, xerrors.Errorf("reading latest: %v", err)
 	}
 
 	pipeline := txPipeline{
@@ -1997,6 +2001,7 @@ func (s *Service) startPolling(scID skipchain.SkipBlockID) chan bool {
 		s.working.Add(1)
 		defer s.working.Done()
 		s.closedMutex.Unlock()
+		log.Print("started pipeline", s.ServerIdentity())
 		s.txPipeline.start(&initialState, stopChan)
 	}()
 	return stopChan
