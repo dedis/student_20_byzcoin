@@ -106,7 +106,12 @@ func testViewChange(t *testing.T, nHosts, nFailures int, interval time.Duration)
 		require.NotNil(t, leader)
 		require.True(t, leader.Equal(s.services[nFailures].ServerIdentity()), fmt.Sprintf("%v", leader))
 	}
-
+  
+	tx1, err = createOneClientTxWithCounter(s.darc.GetBaseID(), dummyContract, tx1ID,
+		s.signer, 2)
+	require.NoError(t, err)
+	s.sendTxTo(t, tx1, nFailures+1)
+  
 	// wait for the transaction to be stored everywhere
 	for i := nFailures; i < nHosts; i++ {
 		pr := s.waitProofWithIdx(t, tx1ID, i)
@@ -127,11 +132,13 @@ func testViewChange(t *testing.T, nHosts, nFailures int, interval time.Duration)
 	s.waitPropagation(t, 0)
 
 	log.Lvl1("Sending 1st tx")
-	tx1, err = createOneClientTxWithCounter(s.darc.GetBaseID(), dummyContract, s.value, s.signer, 2)
+	tx1, err = createOneClientTxWithCounter(s.darc.GetBaseID(),
+		dummyContract, s.value, s.signer, 3)
 	require.NoError(t, err)
 	s.sendTxToAndWait(t, tx1, nFailures, 10)
 	log.Lvl1("Sending 2nd tx")
-	tx1, err = createOneClientTxWithCounter(s.darc.GetBaseID(), dummyContract, s.value, s.signer, 3)
+	tx1, err = createOneClientTxWithCounter(s.darc.GetBaseID(),
+		dummyContract, s.value, s.signer, 4)
 	require.NoError(t, err)
 	s.sendTxToAndWait(t, tx1, nFailures, 10)
 	log.Lvl1("Sent two tx")
@@ -147,12 +154,17 @@ func TestViewChange_LeaderIndex(t *testing.T) {
 	require.Error(t, err)
 	require.Equal(t, "leader index must be positive", err.Error())
 
+	view := viewchange.View{
+		ID:          s.genesis.SkipChainID(),
+		Gen:         s.genesis.SkipChainID(),
+		LeaderIndex: 7,
+	}
 	for i := 0; i < 5; i++ {
-		err := s.services[i].sendViewChangeReq(viewchange.View{
-			ID:          s.genesis.SkipChainID(),
-			Gen:         s.genesis.SkipChainID(),
-			LeaderIndex: 7,
+		s.services[i].viewChangeMan.addReq(viewchange.InitReq{
+			SignerID: s.services[i].ServerIdentity().ID,
+			View:     view,
 		})
+		err := s.services[i].sendViewChangeReq(view)
 		require.NoError(t, err)
 	}
 
@@ -212,7 +224,7 @@ func TestViewChange_LostSync(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEqual(t, sb.Hash, s.genesis.Hash)
 
-	// A new view change starts with a block ID different..
+	// Start a new view change with a different block ID
 	req = &viewchange.InitReq{
 		SignerID: s.services[0].ServerIdentity().ID,
 		View: viewchange.View{
@@ -234,15 +246,23 @@ func TestViewChange_LostSync(t *testing.T) {
 	log.OutputToOs()
 
 	// make sure a view change can still happen later
-	for i := 0; i < 2; i++ {
-		err := s.services[i].sendViewChangeReq(viewchange.View{
-			ID:          sb.Hash,
-			Gen:         s.genesis.SkipChainID(),
-			LeaderIndex: 3,
-		})
+	view := viewchange.View{
+		ID:          sb.Hash,
+		Gen:         s.genesis.SkipChainID(),
+		LeaderIndex: 3,
+	}
+	for i := 0; i < 4; i++ {
+		err := s.services[i].sendViewChangeReq(view)
 		require.NoError(t, err)
 	}
+	for i := 0; i < 4; i++ {
+		s.services[i].viewChangeMan.addReq(viewchange.InitReq{
+			SignerID: s.services[i].ServerIdentity().ID,
+			View:     view,
+		})
+	}
 
+	log.Lvl1("Waiting for the new block to be propagated")
 	s.waitPropagation(t, 2)
 	for _, service := range s.services {
 		// everyone should have the same leader after the genesis block is stored
