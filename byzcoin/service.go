@@ -65,6 +65,9 @@ const viewChangeFtCosi = "viewchange_ftcosi"
 
 var viewChangeMsgID network.MessageTypeID
 
+// Is used in the tests to avoid premature update of the blocks
+var testNoUpgradeBlockVersion = false
+
 // ByzCoinID can be used to refer to this service.
 var ByzCoinID onet.ServiceID
 
@@ -1216,6 +1219,9 @@ func (s *Service) createNewBlock(scID skipchain.SkipBlockID, r *onet.Roster, tx 
 // createUpgradeVersionBlock has the sole purpose of proposing an empty block with the
 // version field of the DataHeader updated so that new blocks will use the new version,
 func (s *Service) createUpgradeVersionBlock(scID skipchain.SkipBlockID, version Version) (*skipchain.SkipBlock, error) {
+	if testNoUpgradeBlockVersion {
+		return nil, nil
+	}
 	sbLatest, err := s.db().GetLatestByID(scID)
 	if err != nil {
 		return nil, xerrors.Errorf(
